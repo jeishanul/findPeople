@@ -3,6 +3,7 @@ import type { ProviderProfile, ServiceCategory } from '#shared/types/marketplace
 
 const { t } = useI18n()
 const route = useRoute()
+const authModal = useAuthModal()
 
 const { data: provider, error } = await useApi<ProviderProfile>(`/providers/${route.params.id}`)
 
@@ -81,14 +82,20 @@ useSchemaOrg([defineWebPage()])
           </div>
         </div>
         <div class="flex gap-2.5 pb-2">
-          <UiButton variant="ghost">
+          <UiButton
+            variant="ghost"
+            @click="authModal.open('login')"
+          >
             <UiIcon
               name="message"
               :size="16"
             />
             {{ t('marketplace.provider.message') }}
           </UiButton>
-          <UiButton variant="primary">
+          <UiButton
+            variant="primary"
+            @click="authModal.open('login')"
+          >
             {{ t('marketplace.providerProfile.contactProvider') }}
           </UiButton>
         </div>

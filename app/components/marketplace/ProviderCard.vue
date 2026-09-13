@@ -17,6 +17,7 @@ withDefaults(
 )
 
 const { t } = useI18n()
+const authModal = useAuthModal()
 
 const linkButtonClass = 'inline-flex items-center justify-center gap-2 rounded-full bg-brand-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-brand-700'
 </script>
@@ -72,7 +73,10 @@ const linkButtonClass = 'inline-flex items-center justify-center gap-2 rounded-f
         ${{ provider.ratePerHour }}<span class="text-sm font-medium text-black/50 dark:text-white/50">{{ t('marketplace.provider.perHour') }}</span>
       </p>
       <div class="flex gap-2">
-        <UiButton variant="ghost">
+        <UiButton
+          variant="ghost"
+          @click="authModal.open('login')"
+        >
           {{ t('marketplace.provider.message') }}
         </UiButton>
         <NuxtLinkLocale

@@ -8,7 +8,7 @@ defineOptions({ inheritAttrs: false })
 withDefaults(
   defineProps<{
     id?: string
-    type?: 'text' | 'tel' | 'email'
+    type?: 'text' | 'tel' | 'email' | 'password'
     placeholder?: string
     icon?: IconName
   }>(),
@@ -39,5 +39,7 @@ const model = defineModel<string>({ default: '' })
       v-bind="$attrs"
       class="w-full bg-transparent text-sm text-black outline-none placeholder:text-black/40 dark:text-white dark:placeholder:text-white/40"
     >
+    <!-- e.g. a show/hide-password toggle — trailing so it sits inside the same bordered field as the icon and input. -->
+    <slot name="trailing" />
   </div>
 </template>

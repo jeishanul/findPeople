@@ -19,6 +19,8 @@ const showDockedSearch = computed(() => isHomeRoute.value && isDocked.value)
 
 const { data: categories } = await useApi<ServiceCategory[]>('/categories', { lazy: true, default: () => [] })
 
+const authModal = useAuthModal()
+
 const localePath = useLocalePath()
 function handleDockedSearch({ category, location }: { category: string, location: string }) {
   navigateTo(localePath({
@@ -79,10 +81,16 @@ function handleDockedSearch({ category, location }: { category: string, location
       <div class="flex shrink-0 items-center gap-3.5">
         <UiThemeToggle />
         <div class="flex items-center gap-2.5">
-          <UiButton variant="ghost">
+          <UiButton
+            variant="ghost"
+            @click="authModal.open('login')"
+          >
             {{ t('nav.login') }}
           </UiButton>
-          <UiButton variant="primary">
+          <UiButton
+            variant="primary"
+            @click="authModal.open('register')"
+          >
             {{ t('nav.signup') }}
           </UiButton>
         </div>

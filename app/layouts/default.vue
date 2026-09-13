@@ -6,5 +6,6 @@
     </main>
     <AppFooter />
     <UiScrollToTopButton />
+    <MarketplaceAuthModal />
   </div>
 </template>

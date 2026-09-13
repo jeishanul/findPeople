@@ -9,6 +9,81 @@
   "ui": {
     "scrollToTop": "Scroll to top"
   },
+  "auth": {
+    "close": "Close",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "tabs": {
+      "login": "Log in",
+      "register": "Sign up"
+    },
+    "login": {
+      "heading": "Welcome back",
+      "subheading": "Log in to message pros and manage your bookings.",
+      "identifierLabel": "Email or username",
+      "identifierPlaceholder": "you{'@'}example.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "rememberMe": "Remember me",
+      "forgotPassword": "Forgot password?",
+      "submit": "Log in",
+      "switchPrompt": "Don't have an account?",
+      "switchAction": "Sign up"
+    },
+    "register": {
+      "heading": "Create your account",
+      "subheading": "Sign up to message pros and start booking trusted help.",
+      "fullNameLabel": "Full name",
+      "fullNamePlaceholder": "Rahim Karim",
+      "emailLabel": "Email",
+      "emailPlaceholder": "you{'@'}example.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Create a password",
+      "terms": "I agree to FindPeople's {tos} and {privacy}.",
+      "termsTos": "Terms of Service",
+      "termsPrivacy": "Privacy Policy",
+      "submit": "Create account",
+      "switchPrompt": "Already have an account?",
+      "switchAction": "Log in"
+    },
+    "social": {
+      "divider": "or continue with",
+      "google": "Continue with Google",
+      "facebook": "Continue with Facebook"
+    },
+    "back": "Back",
+    "forgotPassword": {
+      "heading": "Reset your password",
+      "subheading": "Enter the email linked to your account and we'll send you a verification code.",
+      "emailLabel": "Email",
+      "emailPlaceholder": "you{'@'}example.com",
+      "submit": "Send code",
+      "backToLogin": "Back to log in"
+    },
+    "otp": {
+      "heading": "Enter verification code",
+      "subheading": "We sent a 6-digit code to {email}.",
+      "codeLabel": "Verification code",
+      "submit": "Verify code",
+      "resendCountdown": "Resend code in {time}",
+      "resend": "Resend code",
+      "changeEmail": "Change email"
+    },
+    "resetPassword": {
+      "heading": "Set a new password",
+      "subheading": "Create a new password for your account.",
+      "newPasswordLabel": "New password",
+      "newPasswordPlaceholder": "Enter a new password",
+      "confirmPasswordLabel": "Confirm password",
+      "confirmPasswordPlaceholder": "Re-enter your new password",
+      "mismatchError": "Passwords don't match.",
+      "tooShortError": "Use at least 8 characters.",
+      "submit": "Reset password",
+      "successHeading": "Password reset!",
+      "successBody": "You can now log in with your new password.",
+      "continueToLogin": "Continue to log in"
+    }
+  },
   "nav": {
     "howItWorks": "How it works",
     "browseServices": "Browse services",
