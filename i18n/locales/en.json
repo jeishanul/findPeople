@@ -1,0 +1,19 @@
+{
+  "nav": {
+    "home": "Home"
+  },
+  "home": {
+    "seoTitle": "Home",
+    "seoDescription": "FindPeople helps you connect with the right people, fast.",
+    "heading": "FindPeople",
+    "bodyIntro": "This page demonstrates the project's conventions: SSR data fetching via {useApi}, a shared {uiButton} component, Tailwind v4 utilities driven by {theme} tokens, and page-level SEO/schema.org metadata.",
+    "cta": "Get started",
+    "apiStatus": "API status: {status}"
+  },
+  "errors": {
+    "seoTitle": "Error",
+    "notFound": "Page not found",
+    "somethingWrong": "Something went wrong",
+    "goHome": "Go home"
+  }
+}

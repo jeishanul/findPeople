@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens live here so Tailwind generates utilities/variants from them.
+ * Keep plain CSS variables (that should NOT become Tailwind utilities) under
+ * a separate `:root` block instead of `@theme`.
+ */
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --color-brand-50: oklch(0.97 0.02 260);
+  --color-brand-100: oklch(0.93 0.04 260);
+  --color-brand-500: oklch(0.6 0.18 260);
+  --color-brand-600: oklch(0.52 0.19 260);
+  --color-brand-700: oklch(0.45 0.19 260);
+}
