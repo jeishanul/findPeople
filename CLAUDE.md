@@ -16,6 +16,13 @@ file in the same change.
 - **@nuxtjs/i18n** — multi-locale-ready, only `en` active (see Internationalization below).
 - **@vueuse/nuxt** for generic reactive utilities, **@pinia/nuxt** for cross-component state,
   **@nuxt/image**, **@nuxt/fonts**, **@nuxt/icon** for media/perf.
+- **@nuxtjs/color-mode** for the light/dark theme toggle — persists to `localStorage`, applied by
+  a blocking inline script the module injects before hydration so there's no flash of the wrong
+  theme on refresh despite not being cookie-based. `classSuffix: ''` in `nuxt.config.ts` so the
+  class is plain `dark`/`light`, matching the `@custom-variant dark` override in `main.css` (see
+  Styling rules below) — Tailwind's `dark:` no longer follows `prefers-color-scheme` directly, only the
+  class. `preference: 'system'` is the fallback until a user picks explicitly (see
+  `UiThemeToggle.vue`).
 - **Vitest** (`@nuxt/test-utils` `nuxt` environment) for tests, **ESLint** (`@nuxt/eslint`,
   flat config, stylistic rules on) as the *only* formatter/linter — no Prettier.
 - **nuxt-security** for response security headers/CSP/CORS/rate limiting, **eslint-plugin-vuejs-accessibility**
@@ -189,7 +196,9 @@ instead of a rework.
 4. Anything that shouldn't be indexed (admin, previews, etc.) sets `robots` via `routeRules` or
    `useRobotsRule(...)`, not a manual `<meta>` tag.
 5. Pages that are fully static should get `routeRules: { '<path>': { prerender: true } }' in
-   `nuxt.config.ts`; content-driven/high-traffic pages should use `isr`/`swr` instead of full SSR.
+   `nuxt.config.ts`; content-driven/high-traffic pages should use `isr`/`swr` instead of full SSR
+   — but see the `isr` payload-extraction gotcha under Rendering & performance before reaching
+   for it.
 
 ### OG image renderer suffix
 
@@ -208,7 +217,18 @@ absolute`, use `@nuxt/fonts` for custom fonts.
   `app/assets/css/main.css` — never hardcode a one-off hex color in a component; add a token.
 - No component-scoped `<style>` blocks unless Tailwind genuinely cannot express the rule; if you
   do add one, it needs `@reference` to access theme vars.
-- Dark mode via the `dark:` variant on the same element, not separate components.
+- Dark mode via the `dark:` variant on the same element, not separate components. Dark mode
+  strategy is **class-based, not media-query**: `main.css` overrides Tailwind's default with
+  `@custom-variant dark (&:where(.dark, .dark *));`, and `@nuxtjs/color-mode` puts that `.dark`
+  (or `.light`) class on `<html>` — resolved from the OS preference by default, pinned to
+  whichever the user picks via `<UiThemeToggle>` (see Stack above). Never add a bare
+  `@media (prefers-color-scheme: dark)` rule of your own — it would apply regardless of the
+  user's explicit choice and silently disagree with every `dark:` utility on the page.
+- Every page needs an explicit background/text color reaching all the way to `<body>` (already
+  set once in `main.css`) — relying on the browser's default canvas color broke visibly under a
+  dark OS preference before this was added (translucent/white surfaces read as muddy gray). Don't
+  remove that base rule, and give any new full-bleed section its own explicit background rather
+  than assuming white/black underneath.
 - Tailwind v4 syntax reminders: `@import "tailwindcss"` (no `@tailwind` directives), custom
   utilities via `@utility` (not `@layer utilities`), important modifier goes at the end
   (`bg-red-500!`), arbitrary CSS vars are `bg-(--brand-color)`.
@@ -217,6 +237,14 @@ absolute`, use `@nuxt/fonts` for custom fonts.
 
 - Default rendering is universal SSR. Use `routeRules` in `nuxt.config.ts` for hybrid rendering
   per route (`prerender`, `isr`, `swr`, `ssr: false` for authenticated/dashboard-style routes).
+- **`isr` real bug hit here**: giving `/` (or any route that's never actually prerendered)
+  `{ isr: <seconds> }` made the client request a `_payload.json` for it on every load — the
+  payload-extraction path `isr` shares with prerendered routes — which 404s (nothing wrote that
+  file) and produces a genuine hydration mismatch, not just a console nicety. Confirmed by
+  removing `isr` and re-testing: 404s and the mismatch both disappeared. `/` and
+  `/providers/**` are plain SSR for exactly this reason (see `routeRules` comment in
+  `nuxt.config.ts`). Don't reach for `isr`/`swr` on a route with dynamic per-request data without
+  verifying the payload file actually gets produced in the target deploy target first.
 - `experimental.ssrStreaming` is intentionally **off**. It conflicts with `@nuxtjs/seo`'s
   header/robots mutations during render (`NUXT_E8001`/`NUXT_E8002` warnings, and it also broke
   page-level `useSeoMeta` overrides during scaffolding testing). Don't re-enable it without
@@ -344,11 +372,14 @@ absolute`, use `@nuxt/fonts` for custom fonts.
   association, heading structure, etc.) — this is enforced at lint time, so `npm run lint`
   catches regressions. It's a static/lint-time check only; it doesn't catch everything a runtime
   auditor (axe-core) would. Revisit adding `@nuxt/a11y` once it's out of alpha (see Stack above).
-- The `brand-*` color tokens in `app/assets/css/main.css` were checked against WCAG 2.1 contrast
-  minimums before being picked (`brand-600` on white ≈ 5.67:1, `brand-700` on white ≈ 7.68:1,
-  `brand-500` on black ≈ 5.18:1 — all pass AA for normal text, `brand-700` passes AAA). If you add
-  a new color token, check its contrast against the surface it'll actually sit on before using it
-  for text or icons — don't assume a token is safe just because it's already in `@theme`.
+- The `brand-*` (primary green) and `accent-*` (secondary amber) color tokens in
+  `app/assets/css/main.css` were checked against WCAG 2.1 contrast minimums before being picked:
+  `brand-600` on white ≈ 5.42:1, `brand-700` on white ≈ 8.16:1, `brand-500` on black ≈ 5.73:1 (all
+  pass AA for normal text, `brand-700` passes AAA). `accent-700` on white ≈ 6.42:1 (safe for text);
+  `accent-500`/`accent-600` fall below 4.5:1 on white and are for non-text UI only (icons, fills,
+  badge backgrounds — where the 3:1 non-text minimum applies), never for body text or links. If you
+  add a new color token, check its contrast against the surface it'll actually sit on before using
+  it for text or icons — don't assume a token is safe just because it's already in `@theme`.
 
 ## Known upstream caveat
 

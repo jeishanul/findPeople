@@ -1,0 +1,15 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 1440, "h": 6600 },
+    { "file": "Browse.dc.html", "x": 1540, "y": 0, "w": 1440, "h": 1200 },
+    { "file": "Profile.dc.html", "x": 3080, "y": 0, "w": 1440, "h": 1650 },
+    { "file": "Become.dc.html", "x": 4620, "y": 0, "w": 1440, "h": 2300 }
+  ],
+  "annotations": [
+    { "id": "note-landing", "x": 40, "y": -110, "w": 300, "text": "Landing page — interactive prototype: sliding hero + docking search, scroll-linked how-it-works, auto-sliding category carousel, why choose us, tabbed gallery, auto-sliding testimonials, app download, FAQ accordion" },
+    { "id": "note-browse", "x": 1580, "y": -110, "w": 300, "text": "Browse & filter — buyers filter by location, category, price, rating and see a list of providers" },
+    { "id": "note-profile", "x": 3120, "y": -110, "w": 300, "text": "Provider profile — bio, skills, portfolio, reviews, contact card" },
+    { "id": "note-become", "x": 4660, "y": -110, "w": 300, "text": "Become a pro — freelancer registration & value proposition" }
+  ],
+  "launch": { "view": "canvas" }
+}

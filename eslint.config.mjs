@@ -18,6 +18,13 @@ export default withNuxt(
       'vue/block-lang': ['error', { script: { lang: 'ts' } }],
       'vue/multi-word-component-names': 'off',
       'no-console': ['warn', { allow: ['warn', 'error'] }],
+      // Default `required: {every: ['nesting','id']}` assumes a native
+      // `<label><input></label>` pattern. This codebase pairs labels with
+      // custom form-control components (UiInput, etc.) via id/for as
+      // siblings, not DOM nesting — the rule can't see across component
+      // boundaries either way, so only requiring `for` is what's actually
+      // checkable here; the real association still has to be correct by hand.
+      'vuejs-accessibility/label-has-for': ['error', { required: 'id' }],
       // Force Nuxt aliases (~, ~~, #shared, #server) for anything crossing a directory
       // boundary — only same-folder `./sibling` relative imports are allowed.
       'import/no-relative-parent-imports': 'error',

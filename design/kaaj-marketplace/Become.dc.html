@@ -1,0 +1,215 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <style>
+    :root{
+      --bg:oklch(0.985 0.006 145);
+      --text:oklch(0.22 0.02 150);
+      --text-muted:oklch(0.46 0.02 150);
+      --text-soft:oklch(0.6 0.015 150);
+      --line:oklch(0.9 0.01 150);
+      --primary:oklch(0.58 0.16 152);
+      --primary-dark:oklch(0.44 0.15 152);
+      --primary-darker:oklch(0.33 0.1 152);
+      --primary-light:oklch(0.95 0.045 152);
+      --accent:oklch(0.7 0.16 45);
+      --accent-dark:oklch(0.56 0.16 45);
+      --accent-light:oklch(0.95 0.05 55);
+      --shadow-md:0 12px 32px rgba(20,50,35,0.10);
+    }
+    *{box-sizing:border-box;}
+    body{margin:0;font-family:"Plus Jakarta Sans",system-ui,sans-serif;color:var(--text);background:var(--bg);}
+    h1,h2,h3{font-family:"Space Grotesk",system-ui,sans-serif;margin:0;letter-spacing:-0.01em;}
+    p{margin:0;}
+    a{color:var(--primary-dark);text-decoration:none;}
+    button{font-family:inherit;cursor:pointer;border:none;}
+    input{font-family:inherit;}
+    .wrap{max-width:1240px;margin:0 auto;padding:0 40px;}
+    .glass{background:rgba(255,255,255,0.62);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.7);box-shadow:var(--shadow-md);}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 26px;border-radius:100px;font-weight:600;font-size:15px;white-space:nowrap;}
+    .btn-primary{background:var(--primary);color:#fff;box-shadow:0 10px 24px oklch(0.58 0.16 152 / 0.3);}
+    .btn-ghost{background:rgba(255,255,255,0.5);color:var(--text);border:1px solid var(--line);}
+    .field{width:100%;padding:13px 16px;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:14px;color:var(--text);}
+    .field-label{font-size:13px;font-weight:700;margin-bottom:8px;display:block;}
+    .chip{padding:9px 16px;border-radius:100px;font-size:13.5px;font-weight:600;border:1.5px solid var(--line);color:var(--text-muted);background:#fff;}
+    .chip-active{background:var(--primary);color:#fff;border-color:var(--primary);}
+    .placeholder{position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+    .dims{position:absolute;bottom:10px;right:12px;font-size:11px;font-weight:600;color:oklch(0.4 0.02 152 / 0.55);}
+  </style>
+</helmet>
+
+<div style="position:relative;overflow:hidden;">
+
+  <!-- HEADER -->
+  <header class="glass" style="position:sticky;top:0;z-index:50;">
+    <div class="wrap" style="display:flex;align-items:center;justify-content:space-between;height:84px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:40px;height:40px;border-radius:14px;background:var(--primary);display:flex;align-items:center;justify-content:center;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3C7 5 4 9.5 4 13.5A8 8 0 0 0 12 21a8 8 0 0 0 8-7.5C20 9.5 17 5 12 3z"></path><path d="M12 21V9"></path></svg>
+        </div>
+        <span style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;">Kaaj</span>
+      </div>
+      <nav style="display:flex;gap:36px;">
+        <a href="#" style="font-size:14.5px;font-weight:600;color:var(--text);">How it works</a>
+        <a href="#" style="font-size:14.5px;font-weight:600;color:var(--text);">Browse services</a>
+        <a href="#" style="font-size:14.5px;font-weight:700;color:var(--primary-dark);">Become a pro</a>
+      </nav>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="btn btn-ghost" style="padding:11px 20px;">Log in</button>
+        <button class="btn btn-primary" style="padding:11px 22px;">Sign up</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section style="position:relative;padding:80px 0;">
+    <div style="position:absolute;top:-100px;right:-160px;width:520px;height:520px;border-radius:50%;background:var(--primary-light);filter:blur(55px);opacity:0.9;"></div>
+    <div class="wrap" style="position:relative;display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:56px;align-items:center;">
+      <div>
+        <div style="display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:100px;background:var(--primary-light);color:var(--primary-darker);font-size:13px;font-weight:700;margin-bottom:20px;">For professionals</div>
+        <h1 style="font-size:50px;line-height:1.08;font-weight:700;max-width:560px;">Turn your skills into steady income.</h1>
+        <p style="margin-top:20px;font-size:17px;line-height:1.6;color:var(--text-muted);max-width:480px;">Join Kaaj as a verified professional and get matched with people who need your skills &mdash; on your schedule, at your rate.</p>
+        <div style="margin-top:32px;display:flex;align-items:center;gap:18px;">
+          <button class="btn btn-primary">Get started &mdash; it's free</button>
+          <a href="#" style="font-size:14.5px;font-weight:600;display:flex;align-items:center;gap:6px;">See how it works <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="18" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
+        </div>
+        <p style="margin-top:28px;font-size:13.5px;color:var(--text-soft);">Join 12,000+ professionals already earning with Kaaj</p>
+      </div>
+      <div class="placeholder" style="width:100%;height:420px;border-radius:26px;background:linear-gradient(155deg,var(--accent-light),var(--primary-light));color:oklch(0.5 0.02 152 / 0.5);">
+        <svg width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16.5 15.5 7a2 2 0 0 1 2.8 0l.7.7a2 2 0 0 1 0 2.8L9.5 20 6 16.5z"></path><line x1="4" y1="20" x2="7.5" y2="16.5"></line><path d="M13 8l3-3 2 2-3 3"></path></svg>
+        <span class="dims">440 &times; 420</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- BENEFITS -->
+  <section class="wrap" style="padding:40px 40px 88px;">
+    <div style="text-align:center;max-width:560px;margin:0 auto 48px;">
+      <h2 style="font-size:32px;font-weight:700;">Why professionals choose Kaaj</h2>
+      <p style="margin-top:10px;font-size:15.5px;color:var(--text-muted);">Everything you need to build a steady stream of local work.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;">
+
+      <div class="glass" style="border-radius:20px;padding:28px;">
+        <div style="width:50px;height:50px;border-radius:14px;background:var(--primary-light);color:var(--primary-dark);display:flex;align-items:center;justify-content:center;margin-bottom:18px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><line x1="3" y1="10" x2="21" y2="10"></line><line x1="8" y1="3" x2="8" y2="7"></line><line x1="16" y1="3" x2="16" y2="7"></line></svg></div>
+        <h3 style="font-size:17px;font-weight:700;">Flexible schedule</h3>
+        <p style="margin-top:8px;font-size:14px;line-height:1.65;color:var(--text-muted);">Accept the jobs that fit your calendar. Work as much or as little as you want.</p>
+      </div>
+
+      <div class="glass" style="border-radius:20px;padding:28px;">
+        <div style="width:50px;height:50px;border-radius:14px;background:var(--accent-light);color:var(--accent-dark);display:flex;align-items:center;justify-content:center;margin-bottom:18px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="19" x2="19" y2="5"></line><circle cx="7.5" cy="7.5" r="2"></circle><circle cx="16.5" cy="16.5" r="2"></circle></svg></div>
+        <h3 style="font-size:17px;font-weight:700;">Keep more of what you earn</h3>
+        <p style="margin-top:8px;font-size:14px;line-height:1.65;color:var(--text-muted);">A low, transparent service fee &mdash; no hidden cuts from your rate.</p>
+      </div>
+
+      <div class="glass" style="border-radius:20px;padding:28px;">
+        <div style="width:50px;height:50px;border-radius:14px;background:var(--primary-light);color:var(--primary-dark);display:flex;align-items:center;justify-content:center;margin-bottom:18px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="9.5" rx="1.5"></rect><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"></path></svg></div>
+        <h3 style="font-size:17px;font-weight:700;">Get paid securely</h3>
+        <p style="margin-top:8px;font-size:14px;line-height:1.65;color:var(--text-muted);">Payments are held safely and released to you once the job is confirmed done.</p>
+      </div>
+
+      <div class="glass" style="border-radius:20px;padding:28px;">
+        <div style="width:50px;height:50px;border-radius:14px;background:var(--accent-light);color:var(--accent-dark);display:flex;align-items:center;justify-content:center;margin-bottom:18px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 14.9 8.6 22 9.3 16.5 14 18.2 21 12 17.3 5.8 21 7.5 14 2 9.3 9.1 8.6"></polygon></svg></div>
+        <h3 style="font-size:17px;font-weight:700;">Build trust with reviews</h3>
+        <p style="margin-top:8px;font-size:14px;line-height:1.65;color:var(--text-muted);">Every completed job adds to your public rating and reputation.</p>
+      </div>
+
+      <div class="glass" style="border-radius:20px;padding:28px;">
+        <div style="width:50px;height:50px;border-radius:14px;background:var(--primary-light);color:var(--primary-dark);display:flex;align-items:center;justify-content:center;margin-bottom:18px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"></path><circle cx="12" cy="9.5" r="2.4"></circle></svg></div>
+        <h3 style="font-size:17px;font-weight:700;">Job leads near you</h3>
+        <p style="margin-top:8px;font-size:14px;line-height:1.65;color:var(--text-muted);">We match you with buyers in your own service area &mdash; no long commutes.</p>
+      </div>
+
+      <div class="glass" style="border-radius:20px;padding:28px;">
+        <div style="width:50px;height:50px;border-radius:14px;background:var(--accent-light);color:var(--accent-dark);display:flex;align-items:center;justify-content:center;margin-bottom:18px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 19 6v6c0 5-3.5 8.5-7 9-3.5-.5-7-4-7-9V6l7-3z"></path><polyline points="9 12 11 14 15 10"></polyline></svg></div>
+        <h3 style="font-size:17px;font-weight:700;">Free verified badge</h3>
+        <p style="margin-top:8px;font-size:14px;line-height:1.65;color:var(--text-muted);">Complete onboarding and stand out with a verified badge on your profile.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS (PROS) -->
+  <section style="background:var(--primary-light);padding:76px 0;">
+    <div class="wrap">
+      <div style="text-align:center;max-width:560px;margin:0 auto 48px;">
+        <h2 style="font-size:32px;font-weight:700;">Getting started takes minutes</h2>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:32px;">
+        <div style="text-align:center;">
+          <div style="width:60px;height:60px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;font-family:'Space Grotesk',sans-serif;margin:0 auto 18px;">1</div>
+          <h3 style="font-size:18px;font-weight:700;">Create your profile</h3>
+          <p style="margin-top:8px;font-size:14px;color:var(--text-muted);line-height:1.6;">Pick your skills, service area and rate.</p>
+        </div>
+        <div style="text-align:center;">
+          <div style="width:60px;height:60px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;font-family:'Space Grotesk',sans-serif;margin:0 auto 18px;">2</div>
+          <h3 style="font-size:18px;font-weight:700;">Get verified</h3>
+          <p style="margin-top:8px;font-size:14px;color:var(--text-muted);line-height:1.6;">A quick ID and background check keeps everyone safe.</p>
+        </div>
+        <div style="text-align:center;">
+          <div style="width:60px;height:60px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;font-family:'Space Grotesk',sans-serif;margin:0 auto 18px;">3</div>
+          <h3 style="font-size:18px;font-weight:700;">Start receiving requests</h3>
+          <p style="margin-top:8px;font-size:14px;color:var(--text-muted);line-height:1.6;">Accept jobs, message buyers, and get paid.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNUP FORM -->
+  <section class="wrap" style="padding:88px 40px;display:flex;justify-content:center;">
+    <div class="glass" style="border-radius:26px;padding:44px;width:100%;max-width:560px;">
+      <h2 style="font-size:24px;font-weight:700;text-align:center;">Get started as a pro</h2>
+      <p style="text-align:center;margin-top:8px;font-size:14px;color:var(--text-muted);">It only takes a couple of minutes.</p>
+
+      <div style="margin-top:32px;display:flex;flex-direction:column;gap:20px;">
+        <div>
+          <label class="field-label">Full name</label>
+          <input class="field" type="text" placeholder="e.g. Rahim Karim">
+        </div>
+        <div>
+          <label class="field-label">Phone number</label>
+          <input class="field" type="text" placeholder="+880 1XX XXX XXXX">
+        </div>
+        <div>
+          <label class="field-label">Select your service</label>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;">
+            <span class="chip chip-active">Electrician</span>
+            <span class="chip">House Cleaning</span>
+            <span class="chip">Plumber</span>
+            <span class="chip">Painter</span>
+            <span class="chip">Carpenter</span>
+            <span class="chip">Other</span>
+          </div>
+        </div>
+        <div>
+          <label class="field-label">Service area</label>
+          <input class="field" type="text" placeholder="e.g. Banani, Dhaka">
+        </div>
+        <button class="btn btn-primary" style="width:100%;margin-top:8px;">Continue</button>
+        <p style="text-align:center;font-size:12.5px;color:var(--text-soft);">By continuing, you agree to Kaaj's Terms of Service and Privacy Policy.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER (compact) -->
+  <footer style="background:var(--primary-darker);color:oklch(0.9 0.02 150);padding:36px 0;">
+    <div class="wrap" style="display:flex;align-items:center;justify-content:space-between;font-size:13px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:30px;height:30px;border-radius:9px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3C7 5 4 9.5 4 13.5A8 8 0 0 0 12 21a8 8 0 0 0 8-7.5C20 9.5 17 5 12 3z"></path><path d="M12 21V9"></path></svg></div>
+        <span style="font-family:'Space Grotesk',sans-serif;font-weight:700;color:#fff;">Kaaj</span>
+      </div>
+      <span style="color:oklch(0.7 0.03 150);">&copy; 2026 Kaaj. All rights reserved.</span>
+    </div>
+  </footer>
+
+</div>
+</x-dc>
+</body>
+</html>

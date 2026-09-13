@@ -13,8 +13,24 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
     'nuxt-security',
     '@nuxtjs/i18n',
+    '@nuxtjs/color-mode',
   ],
   devtools: { enabled: true },
+
+  // Favicon matches the brand mark (green rounded square + white leaf, same
+  // as the header/footer logo badge) — see public/favicon.svg. SVG first
+  // (crisp at any size, modern browsers prefer it); PNG fallbacks for
+  // browsers/contexts that don't support SVG favicons.
+  app: {
+    head: {
+      link: [
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+        { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32x32.png' },
+        { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/favicon-16x16.png' },
+        { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png' },
+      ],
+    },
+  },
 
   css: ['~/assets/css/main.css'],
 
@@ -27,10 +43,33 @@ export default defineNuxtConfig({
     indexable: process.env.NUXT_SITE_INDEXABLE === 'true',
   },
 
-  // --- Hybrid rendering defaults; extend per-route as pages are added ---
-  routeRules: {
-    '/': { prerender: true },
+  // --- Theme toggle (AppHeader) ---
+  // `classSuffix: ''` so the module toggles a plain `.dark`/`.light` class on
+  // <html> — matches the `@custom-variant dark (&:where(.dark, .dark *))`
+  // override in main.css (Tailwind v4's class-based dark mode). The module
+  // injects a blocking inline script (before hydration) that reads
+  // `storageKey` from localStorage and applies the class immediately, so
+  // there's no flash of the wrong theme on refresh even though this is
+  // localStorage — not cookie — backed. `preference: 'system'` is the
+  // *initial* value only; picking light/dark explicitly (see
+  // ThemeToggle.vue) overrides it from then on, persisted under this key.
+  colorMode: {
+    classSuffix: '',
+    preference: 'system',
+    fallback: 'light',
+    storageKey: 'color-mode',
   },
+
+  // --- Hybrid rendering defaults; extend per-route as pages are added ---
+  // `/` and `/providers/**` deliberately stay plain SSR, not `isr`: isr's
+  // route-caching layer serves those pages through the same payload-
+  // extraction path as a prerendered route, but this app never prerenders
+  // them — the client then requests a `_payload.json` that was never
+  // written, which 404s and produces a hydration mismatch on every load.
+  // Reproduced and confirmed by removing `isr` here. Revisit only after
+  // confirming that payload actually gets generated (e.g. after a real
+  // `nuxt generate`/CDN-backed cache storage), not just in local preview.
+  routeRules: {},
 
   devServer: {
     port: 3838,
@@ -124,5 +163,14 @@ export default defineNuxtConfig({
     corsHandler: {
       origin: process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3838',
     },
+  },
+
+  // `nuxt-seo-utils` (bundled in @nuxtjs/seo) auto-mirrors OG tags into
+  // `twitter:card` etc. by default — unhead's own dev-time SEO lint then
+  // flags every one of those as deprecated ("use Open Graph metadata
+  // instead"). Open Graph tags alone cover every modern platform's preview,
+  // so turn the Twitter-specific mirroring off rather than silence the warning.
+  seo: {
+    automaticTwitterTags: false,
   },
 })

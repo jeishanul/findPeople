@@ -1,0 +1,799 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <style>
+    :root{
+      --bg:oklch(0.985 0.006 145);
+      --surface:#ffffff;
+      --text:oklch(0.22 0.02 150);
+      --text-muted:oklch(0.46 0.02 150);
+      --text-soft:oklch(0.6 0.015 150);
+      --line:oklch(0.9 0.01 150);
+      --primary:oklch(0.58 0.16 152);
+      --primary-dark:oklch(0.44 0.15 152);
+      --primary-darker:oklch(0.33 0.1 152);
+      --primary-light:oklch(0.95 0.045 152);
+      --accent:oklch(0.7 0.16 45);
+      --accent-dark:oklch(0.56 0.16 45);
+      --accent-light:oklch(0.95 0.05 55);
+      --shadow-sm:0 2px 10px rgba(20,50,35,0.06);
+      --shadow-md:0 12px 32px rgba(20,50,35,0.10);
+      --shadow-lg:0 24px 60px rgba(20,50,35,0.14);
+    }
+    *{box-sizing:border-box;}
+    body{margin:0;font-family:"Plus Jakarta Sans",system-ui,sans-serif;color:var(--text);background:var(--bg);}
+    h1,h2,h3{font-family:"Space Grotesk",system-ui,sans-serif;margin:0;letter-spacing:-0.01em;}
+    p{margin:0;}
+    a{color:var(--primary-dark);text-decoration:none;}
+    a:hover{color:var(--primary);}
+    button{font-family:inherit;cursor:pointer;border:none;background:none;}
+    input{font-family:inherit;}
+    .wrap{max-width:1240px;margin:0 auto;padding:0 40px;}
+    .glass{background:rgba(255,255,255,0.62);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.7);box-shadow:var(--shadow-md);}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 24px;border-radius:100px;font-weight:600;font-size:15px;white-space:nowrap;}
+    .btn-primary{background:var(--primary);color:#fff;box-shadow:0 10px 24px oklch(0.58 0.16 152 / 0.3);}
+    .btn-primary:hover{background:var(--primary-dark);}
+    .btn-ghost{background:rgba(255,255,255,0.5);color:var(--text);border:1px solid var(--line);}
+    .btn-ghost:hover{background:#fff;}
+    .tag{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:100px;background:var(--primary-light);color:var(--primary-darker);font-size:12.5px;font-weight:600;}
+    .icon-badge{display:flex;align-items:center;justify-content:center;border-radius:14px;flex-shrink:0;}
+    .placeholder{position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+    .dims{position:absolute;bottom:10px;right:12px;font-size:11px;font-weight:600;color:oklch(0.4 0.02 152 / 0.55);}
+    .arrow-btn{width:44px;height:44px;border-radius:50%;background:#fff;box-shadow:var(--shadow-md);display:flex;align-items:center;justify-content:center;color:var(--text);flex-shrink:0;}
+    .arrow-btn:hover{background:var(--primary-light);color:var(--primary-dark);}
+    .qmod{fill:currentColor;}
+  </style>
+</helmet>
+
+<div style="position:relative;">
+
+  <!-- ================= HEADER ================= -->
+  <header id="site-header" class="glass" style="position:sticky;top:0;z-index:60;">
+    <div class="wrap" style="display:flex;align-items:center;justify-content:space-between;height:84px;position:relative;">
+      <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+        <div class="icon-badge" style="width:40px;height:40px;background:var(--primary);">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3C7 5 4 9.5 4 13.5A8 8 0 0 0 12 21a8 8 0 0 0 8-7.5C20 9.5 17 5 12 3z"></path><path d="M12 21V9"></path></svg>
+        </div>
+        <span style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;">Kaaj</span>
+      </div>
+
+      <nav style="{{headerNavStyle}}">
+        <a href="#" style="font-size:14.5px;font-weight:600;color:var(--text);">How it works</a>
+        <a href="#" style="font-size:14.5px;font-weight:600;color:var(--text);">Browse services</a>
+        <a href="#" style="font-size:14.5px;font-weight:600;color:var(--text);">Become a pro</a>
+      </nav>
+
+      <div class="glass" style="{{headerSearchStyle}}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-soft)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <span style="font-size:13.5px;color:var(--text-soft);">What service?</span>
+        <div style="width:1px;height:18px;background:var(--line);"></div>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-soft)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"></path></svg>
+        <span style="font-size:13.5px;color:var(--text-soft);">Location</span>
+        <button class="btn btn-primary" style="padding:8px 16px;font-size:13px;">Search</button>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;">
+        <button class="btn btn-ghost" style="padding:11px 20px;">Log in</button>
+        <button class="btn btn-primary">Sign up</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= HERO ================= -->
+  <section class="wrap" style="padding:36px 40px 0;">
+    <div style="position:relative;">
+      <div style="{{heroCardStyle}}" onMouseEnter="{{onHeroEnter}}" onMouseLeave="{{onHeroLeave}}">
+
+        <div style="max-width:520px;position:relative;z-index:2;">
+          <div class="tag" style="margin-bottom:20px;background:rgba(255,255,255,0.7);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 19 6v6c0 5-3.5 8.5-7 9-3.5-.5-7-4-7-9V6l7-3z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>
+            Trusted by 12,000+ verified pros
+          </div>
+          <h1 style="font-size:44px;line-height:1.1;font-weight:700;">{{heroData.headline}}</h1>
+          <p style="margin-top:18px;font-size:16.5px;line-height:1.6;color:var(--text-muted);max-width:460px;">{{heroData.sub}}</p>
+        </div>
+
+        <div style="position:absolute;right:64px;top:50%;transform:translateY(-50%);width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,0.55);display:flex;align-items:center;justify-content:center;color:var(--primary-dark);z-index:1;">
+          <svg width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 1 1-5.4 5.4L5 16v3h3l4.3-4.3a4 4 0 0 1 5.4-5.4l-2.2 2.2-1.6-1.6 2.2-2.2z"></path></svg>
+        </div>
+
+        <button class="arrow-btn" style="position:absolute;left:24px;top:50%;transform:translateY(-50%);z-index:3;" onClick="{{heroPrev}}">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <button class="arrow-btn" style="position:absolute;right:24px;top:50%;transform:translateY(-50%);z-index:3;" onClick="{{heroNext}}">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+
+        <div style="position:absolute;bottom:26px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:3;">
+          <sc-for list="{{heroDots}}" as="dot" hint-placeholder-count="3">
+            <button style="height:8px;border-radius:100px;transition:all 300ms ease;{{dot.dotStyle}}" onClick="{{dot.pick}}"></button>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- search bar overlapping the hero card's bottom edge -->
+      <div id="hero-search-anchor" class="glass" style="position:absolute;left:50%;bottom:-38px;transform:translateX(-50%);border-radius:100px;padding:8px;display:flex;align-items:center;gap:4px;width:100%;max-width:620px;">
+        <div style="display:flex;align-items:center;gap:10px;flex:1.2;padding:10px 18px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-soft)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <span style="font-size:14.5px;color:var(--text-soft);">What do you need help with?</span>
+          <svg style="margin-left:auto;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-soft)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div style="width:1px;height:26px;background:var(--line);"></div>
+        <div style="display:flex;align-items:center;gap:10px;flex:1;padding:10px 18px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-soft)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"></path><circle cx="12" cy="9.5" r="2.4"></circle></svg>
+          <span style="font-size:14.5px;color:var(--text-soft);">Your location</span>
+        </div>
+        <button class="btn btn-primary" style="padding:14px 26px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          Find pros
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TRUST BAR ================= -->
+  <section class="wrap" style="padding:96px 40px 64px;">
+    <div class="glass" style="border-radius:24px;padding:32px 48px;display:grid;grid-template-columns:repeat(3,1fr);">
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div class="icon-badge" style="width:48px;height:48px;background:var(--primary-light);color:var(--primary-dark);"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"></circle><path d="M3 20c0-3.5 2.7-6.3 6-6.3s6 2.8 6 6.3"></path><circle cx="17.5" cy="9" r="2.3"></circle><path d="M15.3 13.8c2.2.3 3.9 2.2 4.2 5"></path></svg></div>
+        <div><div style="font-size:24px;font-weight:700;font-family:'Space Grotesk',sans-serif;">12,000+</div><div style="font-size:13.5px;color:var(--text-muted);">Verified professionals</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px;border-left:1px solid var(--line);border-right:1px solid var(--line);padding-left:32px;">
+        <div class="icon-badge" style="width:48px;height:48px;background:var(--accent-light);color:var(--accent-dark);"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"></rect><path d="M8 7V5.5A1.5 1.5 0 0 1 9.5 4h5A1.5 1.5 0 0 1 16 5.5V7"></path><line x1="3" y1="13" x2="21" y2="13"></line></svg></div>
+        <div><div style="font-size:24px;font-weight:700;font-family:'Space Grotesk',sans-serif;">40+</div><div style="font-size:13.5px;color:var(--text-muted);">Service categories</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px;padding-left:32px;">
+        <div class="icon-badge" style="width:48px;height:48px;background:var(--primary-light);color:var(--primary-dark);"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 14.9 8.6 22 9.3 16.5 14 18.2 21 12 17.3 5.8 21 7.5 14 2 9.3 9.1 8.6"></polygon></svg></div>
+        <div><div style="font-size:24px;font-weight:700;font-family:'Space Grotesk',sans-serif;">98%</div><div style="font-size:13.5px;color:var(--text-muted);">Job satisfaction rate</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= HOW KAAJ WORKS (scrollytelling) ================= -->
+  <section class="wrap" style="padding:40px 40px 88px;">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+      <span style="width:24px;height:1px;background:var(--text-soft);display:inline-block;"></span>
+      <span style="font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-soft);">How it works</span>
+    </div>
+    <h2 style="font-size:34px;font-weight:700;margin-bottom:48px;">The easiest way to get a job done</h2>
+
+    <div style="display:grid;grid-template-columns:440px minmax(0,1fr);gap:64px;">
+      <div style="position:sticky;top:120px;align-self:start;">
+        <div class="placeholder" style="width:100%;height:420px;border-radius:26px;background:var(--primary-light);color:var(--primary-dark);box-shadow:var(--shadow-lg);">
+          <div style="{{step0IconStyle}}"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></div>
+          <div style="{{step1IconStyle}}"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><line x1="3" y1="10" x2="21" y2="10"></line><line x1="8" y1="3" x2="8" y2="7"></line><line x1="16" y1="3" x2="16" y2="7"></line></svg></div>
+          <div style="{{step2IconStyle}}"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="9.5" rx="1.5"></rect><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"></path></svg></div>
+          <div style="position:absolute;bottom:24px;left:24px;font-size:64px;font-weight:700;font-family:'Space Grotesk',sans-serif;opacity:0.18;">{{activeStepNum}}</div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <sc-for list="{{steps}}" as="step" hint-placeholder-count="3">
+          <div data-step-el style="padding:22px 0;transition:opacity 300ms ease;{{step.wrapStyle}}" onClick="{{step.pick}}">
+            <div style="display:flex;gap:20px;align-items:flex-start;">
+              <div style="width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:700;font-family:'Space Grotesk',sans-serif;flex-shrink:0;transition:all 300ms ease;{{step.numStyle}}">{{step.n}}</div>
+              <div>
+                <h3 style="font-size:22px;font-weight:700;">{{step.title}}</h3>
+                <p style="margin-top:10px;font-size:15px;line-height:1.65;color:var(--text-muted);max-width:420px;">{{step.desc}}</p>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= BROWSE BY CATEGORY (carousel) ================= -->
+  <section class="wrap" style="padding:0 40px 88px;">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:36px;">
+      <div>
+        <h2 style="font-size:34px;font-weight:700;">Browse by category</h2>
+        <p style="margin-top:10px;font-size:15.5px;color:var(--text-muted);">Whatever the job, there's a trusted local pro for it.</p>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="arrow-btn" style="box-shadow:none;border:1px solid var(--line);" onClick="{{catPrev}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+        <button class="arrow-btn" style="box-shadow:none;border:1px solid var(--line);" onClick="{{catNext}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+      </div>
+    </div>
+
+    <div style="overflow:hidden;" onMouseEnter="{{onCatEnter}}" onMouseLeave="{{onCatLeave}}">
+      <div style="display:flex;gap:20px;transition:transform 600ms ease;{{catTrackStyle}}">
+        <sc-for list="{{categories}}" as="cat" hint-placeholder-count="8">
+          <div class="glass" style="border-radius:18px;padding:26px;display:flex;flex-direction:column;gap:14px;width:216px;flex-shrink:0;">
+            <div class="icon-badge" style="width:52px;height:52px;background:{{cat.tint}};color:{{cat.tintDark}};">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="{{cat.iconPath}}"></path></svg>
+            </div>
+            <div><div style="font-size:16px;font-weight:700;">{{cat.label}}</div><div style="font-size:13px;color:var(--text-muted);margin-top:2px;">{{cat.count}}</div></div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FEATURED PROVIDERS ================= -->
+  <section class="wrap" style="padding:0 40px 88px;">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:40px;">
+      <div>
+        <h2 style="font-size:34px;font-weight:700;">Top-rated pros near you</h2>
+        <p style="margin-top:10px;font-size:15.5px;color:var(--text-muted);">A sample of the professionals available in your area.</p>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px;">
+      <sc-for list="{{providers}}" as="pro" hint-placeholder-count="4">
+        <div class="glass" style="border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:14px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:{{pro.tint}};color:{{pro.tintDark}};">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="{{pro.iconPath}}"></path></svg>
+            </div>
+            <div>
+              <div style="display:flex;align-items:center;gap:5px;font-size:15px;font-weight:700;">{{pro.name}} <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--primary)" stroke="none"><path d="M12 3 19 6v6c0 5-3.5 8.5-7 9-3.5-.5-7-4-7-9V6l7-3z"></path></svg></div>
+              <div style="font-size:12.5px;color:var(--text-muted);">{{pro.role}}</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:13px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--accent-dark)" stroke="none"><polygon points="12 2 14.9 8.6 22 9.3 16.5 14 18.2 21 12 17.3 5.8 21 7.5 14 2 9.3 9.1 8.6"></polygon></svg>
+            <strong>{{pro.rating}}</strong><span style="color:var(--text-muted);">({{pro.reviews}})</span>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <span class="tag" style="background:oklch(0.95 0.01 150);color:var(--text-muted);">{{pro.tag1}}</span>
+            <span class="tag" style="background:oklch(0.95 0.01 150);color:var(--text-muted);">{{pro.tag2}}</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--text-muted);border-top:1px solid var(--line);padding-top:14px;">
+            <span>From <strong style="color:var(--text);">{{pro.rate}}</strong></span>
+            <span style="display:flex;align-items:center;gap:4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"></path></svg>{{pro.distance}}</span>
+          </div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center;padding:11px;">View profile</button>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="display:flex;justify-content:center;margin-top:36px;">
+      <button class="btn btn-ghost" style="background:#fff;padding:13px 28px;" onClick="{{toggleProviders}}">{{providersToggleLabel}}</button>
+    </div>
+  </section>
+
+  <!-- ================= WHY CHOOSE US ================= -->
+  <section class="wrap" style="padding:0 40px 88px;">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+      <span style="width:24px;height:1px;background:var(--text-soft);display:inline-block;"></span>
+      <span style="font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-soft);">Why choose us</span>
+    </div>
+    <h2 style="font-size:34px;font-weight:700;margin-bottom:40px;max-width:640px;">Because we care about who shows up at your door</h2>
+
+    <div style="display:grid;grid-template-columns:1fr 1.3fr;gap:24px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="glass" style="border-radius:18px;padding:26px;">
+          <div class="icon-badge" style="width:44px;height:44px;background:var(--primary-light);color:var(--primary-dark);margin-bottom:14px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 19 6v6c0 5-3.5 8.5-7 9-3.5-.5-7-4-7-9V6l7-3z"></path><polyline points="9 12 11 14 15 10"></polyline></svg></div>
+          <div style="font-size:15.5px;font-weight:700;">Verified &amp; insured pros</div>
+        </div>
+        <div class="glass" style="border-radius:18px;padding:26px;">
+          <div class="icon-badge" style="width:44px;height:44px;background:var(--accent-light);color:var(--accent-dark);margin-bottom:14px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 2.5h2.7l1.6 4-2 2c1 2.6 3 4.6 5.6 5.6l2-2 4 1.6v2.7c0 1-.9 1.9-1.9 1.8-7.3-.5-13-6.2-13.5-13.5C4.6 3.4 5.5 2.5 6.5 2.5z"></path></svg></div>
+          <div style="font-size:15.5px;font-weight:700;">24/7 customer support</div>
+        </div>
+        <div class="glass" style="border-radius:18px;padding:26px;">
+          <div class="icon-badge" style="width:44px;height:44px;background:var(--primary-light);color:var(--primary-dark);margin-bottom:14px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="9.5" rx="1.5"></rect><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"></path></svg></div>
+          <div style="font-size:15.5px;font-weight:700;">Secure, cashless payments</div>
+        </div>
+        <div class="glass" style="border-radius:18px;padding:26px;">
+          <div class="icon-badge" style="width:44px;height:44px;background:var(--accent-light);color:var(--accent-dark);margin-bottom:14px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 14.9 8.6 22 9.3 16.5 14 18.2 21 12 17.3 5.8 21 7.5 14 2 9.3 9.1 8.6"></polygon></svg></div>
+          <div style="font-size:15.5px;font-weight:700;">Rated by real customers</div>
+        </div>
+      </div>
+
+      <div class="placeholder" style="border-radius:24px;background:linear-gradient(150deg,var(--primary-light),var(--accent-light));color:oklch(0.5 0.02 152 / 0.5);position:relative;overflow:hidden;">
+        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"></path></svg>
+        <span class="dims">560 &times; 380</span>
+        <div style="position:absolute;bottom:0;left:0;right:0;height:64px;background:linear-gradient(90deg,var(--primary),var(--primary-dark));display:flex;align-items:center;justify-content:center;gap:8px;color:#fff;font-size:13.5px;font-weight:700;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 19 6v6c0 5-3.5 8.5-7 9-3.5-.5-7-4-7-9V6l7-3z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>
+          Trust guaranteed on every job
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= GALLERY (tabs + auto-scroll) ================= -->
+  <section class="wrap" style="padding:0 40px 88px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;">
+      <h2 style="font-size:34px;font-weight:700;">Recently completed jobs</h2>
+      <a href="#" style="display:flex;align-items:center;gap:6px;font-size:14.5px;font-weight:700;">View all <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="18" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></a>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-bottom:28px;">
+      <button style="{{tabHomeStyle}}" onClick="{{pickHome}}">For Your Home</button>
+      <button style="{{tabRecStyle}}" onClick="{{pickRec}}">Recommended</button>
+      <button style="{{tabTrendStyle}}" onClick="{{pickTrend}}">Trending</button>
+    </div>
+
+    <div style="position:relative;">
+      <div style="overflow:hidden;" onMouseEnter="{{onGalEnter}}" onMouseLeave="{{onGalLeave}}">
+        <div style="display:flex;gap:20px;transition:transform 600ms ease;{{galTrackStyle}}">
+          <sc-for list="{{galleryItems}}" as="g" hint-placeholder-count="6">
+            <div style="width:276px;flex-shrink:0;">
+              <div class="placeholder" style="width:100%;height:190px;border-radius:16px;background:{{g.tint}};color:{{g.tintDark}};">
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="{{g.iconPath}}"></path></svg>
+                <span class="dims">276 &times; 190</span>
+              </div>
+              <div style="margin-top:12px;font-size:14.5px;font-weight:700;">{{g.label}}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <button class="arrow-btn" style="position:absolute;left:-22px;top:78px;" onClick="{{galPrev}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+      <button class="arrow-btn" style="position:absolute;right:-22px;top:78px;" onClick="{{galNext}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+    </div>
+  </section>
+
+  <!-- ================= TESTIMONIALS (auto-sliding) ================= -->
+  <section style="background:var(--primary-light);padding:80px 0;">
+    <div class="wrap" style="max-width:820px;">
+      <div style="text-align:center;margin-bottom:44px;">
+        <h2 style="font-size:34px;font-weight:700;">What customers are saying</h2>
+      </div>
+      <div class="glass" style="border-radius:26px;padding:48px;text-align:center;" onMouseEnter="{{onTestiEnter}}" onMouseLeave="{{onTestiLeave}}">
+        <div style="display:flex;justify-content:center;gap:4px;margin-bottom:20px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--accent-dark)" stroke="none"><polygon points="12 2 14.9 8.6 22 9.3 16.5 14 18.2 21 12 17.3 5.8 21 7.5 14 2 9.3 9.1 8.6"></polygon></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--accent-dark)" stroke="none"><polygon points="12 2 14.9 8.6 22 9.3 16.5 14 18.2 21 12 17.3 5.8 21 7.5 14 2 9.3 9.1 8.6"></polygon></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--accent-dark)" stroke="none"><polygon points="12 2 14.9 8.6 22 9.3 16.5 14 18.2 21 12 17.3 5.8 21 7.5 14 2 9.3 9.1 8.6"></polygon></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--accent-dark)" stroke="none"><polygon points="12 2 14.9 8.6 22 9.3 16.5 14 18.2 21 12 17.3 5.8 21 7.5 14 2 9.3 9.1 8.6"></polygon></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--accent-dark)" stroke="none"><polygon points="12 2 14.9 8.6 22 9.3 16.5 14 18.2 21 12 17.3 5.8 21 7.5 14 2 9.3 9.1 8.6"></polygon></svg>
+        </div>
+        <p style="font-size:19px;line-height:1.6;font-weight:500;max-width:600px;margin:0 auto;">&ldquo;{{testi.quote}}&rdquo;</p>
+        <div style="margin-top:24px;font-size:14.5px;font-weight:700;">{{testi.name}}</div>
+        <div style="font-size:13px;color:var(--text-muted);">{{testi.role}}</div>
+        <div style="display:flex;justify-content:center;gap:8px;margin-top:28px;">
+          <sc-for list="{{testiDots}}" as="dot" hint-placeholder-count="5">
+            <button style="height:8px;border-radius:100px;transition:all 300ms ease;{{dot.dotStyle}}" onClick="{{dot.pick}}"></button>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= DOWNLOAD OUR APP ================= -->
+  <section class="wrap" style="padding:88px 40px;">
+    <div style="display:grid;grid-template-columns:440px minmax(0,1fr);gap:56px;align-items:center;">
+      <div style="position:relative;height:400px;">
+        <div class="placeholder" style="position:absolute;left:60px;top:0;width:230px;height:400px;border-radius:32px;background:oklch(0.2 0.01 152);box-shadow:var(--shadow-lg);">
+          <div class="placeholder" style="width:206px;height:376px;border-radius:22px;background:var(--primary-light);color:var(--primary-dark);">
+            <svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.6"></circle><path d="M21 15.5 16 10 5 21"></path></svg>
+          </div>
+        </div>
+        <div style="position:absolute;left:0;top:40px;display:flex;flex-direction:column;gap:14px;">
+          <div style="width:118px;height:38px;border-radius:9px;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;gap:8px;font-size:11px;font-weight:700;color:var(--text);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary-dark)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2"></rect><line x1="6" y1="18" x2="18" y2="18"></line></svg>
+            Google Play
+          </div>
+          <div style="width:118px;height:38px;border-radius:9px;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;gap:8px;font-size:11px;font-weight:700;color:var(--text);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2"></rect><line x1="6" y1="18" x2="18" y2="18"></line></svg>
+            App Store
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <span style="width:24px;height:1px;background:var(--text-soft);display:inline-block;"></span>
+          <span style="font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-soft);">Download our app</span>
+        </div>
+        <h2 style="font-size:34px;font-weight:700;">Any service, any time, anywhere.</h2>
+        <p style="margin-top:14px;font-size:15.5px;line-height:1.6;color:var(--text-muted);max-width:440px;">Give us your mobile number and we'll text you a link to download the Kaaj app.</p>
+
+        <div class="glass" style="margin-top:28px;border-radius:100px;padding:6px;display:flex;gap:6px;max-width:440px;">
+          <input class="field" type="tel" placeholder="Type your mobile number" style="flex:1;border:none;background:transparent;padding:12px 18px;font-size:14px;color:var(--text);outline:none;">
+          <button class="btn btn-primary" style="padding:12px 22px;">Get the app</button>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:16px;margin-top:24px;">
+          <div class="placeholder" style="width:64px;height:64px;border-radius:12px;background:#fff;border:1px solid var(--line);color:var(--text);">
+            <svg width="46" height="46" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M2 2H8V8H2Z M16 2H22V8H16Z M2 16H8V22H2Z M11 2h2v2h-2Z M14 5h2v2h-2Z M11 8h2v2h-2Z M17 11h2v2h-2Z M2 11h2v2h-2Z M5 14h2v2h-2Z M8 17h2v2h-2Z M14 14h2v2h-2Z M17 17h2v2h-2Z M20 14h2v2h-2Z M11 20h2v2h-2Z M14 20h2v2h-2Z"></path></svg>
+          </div>
+          <span style="font-size:13px;color:var(--text-muted);max-width:220px;">Scan the QR code to download directly to your phone.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass" style="margin-top:64px;border-radius:24px;padding:36px 44px;display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div style="font-size:19px;font-weight:700;">Can't find your service? Let us know &mdash; we're here 24/7.</div>
+        <div style="margin-top:6px;font-size:14px;color:var(--text-muted);">Call us anytime at <strong style="color:var(--text);">[YOUR SUPPORT NUMBER]</strong></div>
+      </div>
+      <div style="display:flex;gap:10px;flex-shrink:0;">
+        <button class="btn btn-ghost" style="background:#fff;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 2.5h2.7l1.6 4-2 2c1 2.6 3 4.6 5.6 5.6l2-2 4 1.6v2.7c0 1-.9 1.9-1.9 1.8-7.3-.5-13-6.2-13.5-13.5C4.6 3.4 5.5 2.5 6.5 2.5z"></path></svg>
+          [YOUR SUPPORT NUMBER]
+        </button>
+        <button class="btn btn-primary">Request a service</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FAQ ================= -->
+  <section class="wrap" style="padding:0 40px 96px;max-width:840px;">
+    <div style="text-align:center;margin-bottom:44px;">
+      <h2 style="font-size:34px;font-weight:700;">Frequently asked questions</h2>
+      <p style="margin-top:10px;font-size:15.5px;color:var(--text-muted);">Everything you need to know before your first booking.</p>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <sc-for list="{{faq}}" as="item" hint-placeholder-count="6">
+        <div class="glass" style="border-radius:16px;padding:22px 26px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onClick="{{item.toggle}}">
+            <span style="font-size:15.5px;font-weight:700;">{{item.q}}</span>
+            <span style="transition:transform 250ms ease;flex-shrink:0;{{item.chevronStyle}}">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary-dark)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </span>
+          </div>
+          <div style="overflow:hidden;transition:all 300ms ease;{{item.answerStyle}}">
+            <p style="font-size:14.5px;line-height:1.7;color:var(--text-muted);">{{item.a}}</p>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="display:flex;justify-content:center;margin-top:28px;">
+      <button class="btn btn-ghost" style="background:#fff;padding:13px 28px;" onClick="{{toggleFaqMore}}">{{faqToggleLabel}}</button>
+    </div>
+  </section>
+
+  <!-- ================= FOOTER ================= -->
+  <footer style="background:var(--primary-darker);color:oklch(0.92 0.02 150);padding:64px 0 28px;">
+    <div class="wrap" style="display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr 1fr;gap:36px;">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="icon-badge" style="width:36px;height:36px;background:rgba(255,255,255,0.12);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3C7 5 4 9.5 4 13.5A8 8 0 0 0 12 21a8 8 0 0 0 8-7.5C20 9.5 17 5 12 3z"></path><path d="M12 21V9"></path></svg>
+          </div>
+          <span style="font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:700;color:#fff;">Kaaj</span>
+        </div>
+        <p style="margin-top:16px;font-size:13.5px;line-height:1.7;color:oklch(0.85 0.02 150);max-width:240px;">Connecting skilled local professionals with people who need work done.</p>
+        <div style="display:flex;gap:10px;margin-top:20px;">
+          <div style="width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="#fff" stroke="none"><path d="M13.5 21v-7h2.2l.3-2.6h-2.5V9.7c0-.8.2-1.3 1.3-1.3h1.4V6.1c-.2 0-1-.1-1.9-.1-1.9 0-3.2 1.1-3.2 3.3v1.9H9v2.6h2.1V21h2.4z"></path></svg></div>
+          <div style="width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line></svg></div>
+          <div style="width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="16.2" cy="7.8" r="1"></circle></svg></div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:oklch(0.7 0.03 150);margin-bottom:16px;">For customers</div>
+        <div style="display:flex;flex-direction:column;gap:11px;font-size:13.5px;">
+          <a href="#" style="color:oklch(0.9 0.02 150);">Browse services</a>
+          <a href="#" style="color:oklch(0.9 0.02 150);">How it works</a>
+          <a href="#" style="color:oklch(0.9 0.02 150);">Safety &amp; trust</a>
+          <a href="#" style="color:oklch(0.9 0.02 150);">Help center</a>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:oklch(0.7 0.03 150);margin-bottom:16px;">For professionals</div>
+        <div style="display:flex;flex-direction:column;gap:11px;font-size:13.5px;">
+          <a href="#" style="color:oklch(0.9 0.02 150);">Become a pro</a>
+          <a href="#" style="color:oklch(0.9 0.02 150);">Verification process</a>
+          <a href="#" style="color:oklch(0.9 0.02 150);">Pricing &amp; fees</a>
+          <a href="#" style="color:oklch(0.9 0.02 150);">Pro resources</a>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:oklch(0.7 0.03 150);margin-bottom:16px;">Company</div>
+        <div style="display:flex;flex-direction:column;gap:11px;font-size:13.5px;">
+          <a href="#" style="color:oklch(0.9 0.02 150);">About Kaaj</a>
+          <a href="#" style="color:oklch(0.9 0.02 150);">Careers</a>
+          <a href="#" style="color:oklch(0.9 0.02 150);">Terms of service</a>
+          <a href="#" style="color:oklch(0.9 0.02 150);">Privacy policy</a>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:oklch(0.7 0.03 150);margin-bottom:16px;">Get the app</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="width:132px;height:38px;border-radius:9px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;gap:8px;font-size:11px;font-weight:700;color:#fff;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2"></rect><line x1="6" y1="18" x2="18" y2="18"></line></svg>
+            Google Play
+          </div>
+          <div style="width:132px;height:38px;border-radius:9px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;gap:8px;font-size:11px;font-weight:700;color:#fff;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2"></rect><line x1="6" y1="18" x2="18" y2="18"></line></svg>
+            App Store
+          </div>
+          <div style="width:56px;height:56px;border-radius:10px;background:#fff;margin-top:4px;display:flex;align-items:center;justify-content:center;color:var(--primary-darker);">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M2 2H8V8H2Z M16 2H22V8H16Z M2 16H8V22H2Z M11 2h2v2h-2Z M14 5h2v2h-2Z M11 8h2v2h-2Z M17 11h2v2h-2Z M2 11h2v2h-2Z M5 14h2v2h-2Z M8 17h2v2h-2Z M14 14h2v2h-2Z M17 17h2v2h-2Z M20 14h2v2h-2Z M11 20h2v2h-2Z M14 20h2v2h-2Z"></path></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="wrap" style="margin-top:48px;padding-top:24px;border-top:1px solid rgba(255,255,255,0.12);display:flex;justify-content:space-between;font-size:12.5px;color:oklch(0.65 0.03 150);">
+      <span>&copy; 2026 Kaaj. All rights reserved.</span>
+      <span>Made for people who get things done.</span>
+    </div>
+  </footer>
+
+</div>
+</x-dc>
+
+<script data-dc-script>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      docked: false,
+      heroSlide: 0,
+      heroPaused: false,
+      stepActive: 0,
+      catIndex: 0,
+      catPaused: false,
+      providersShowAll: false,
+      galleryTab: 'home',
+      galleryIndex: 0,
+      galleryPaused: false,
+      testiIndex: 0,
+      testiPaused: false,
+      faqOpen: 0,
+      faqShowMore: false
+    };
+  }
+
+  componentDidMount() {
+    var self = this;
+    this._onScroll = function () {
+      var anchor = document.getElementById('hero-search-anchor');
+      if (anchor) {
+        var top = anchor.getBoundingClientRect().top;
+        var docked = top < 88;
+        if (docked !== self.state.docked) self.setState({ docked: docked });
+      }
+      var stepsEls = document.querySelectorAll('[data-step-el]');
+      if (stepsEls.length) {
+        var active = 0;
+        for (var i = 0; i < stepsEls.length; i++) {
+          var r = stepsEls[i].getBoundingClientRect();
+          if (r.top < window.innerHeight * 0.5) active = i;
+        }
+        if (active !== self.state.stepActive) self.setState({ stepActive: active });
+      }
+    };
+    window.addEventListener('scroll', this._onScroll, { passive: true });
+    this._onScroll();
+
+    this._heroTimer = setInterval(function () {
+      if (!self.state.heroPaused) self.setState(function (s) { return { heroSlide: (s.heroSlide + 1) % 3 }; });
+    }, 5000);
+    this._catTimer = setInterval(function () {
+      if (!self.state.catPaused) self.setState(function (s) { return { catIndex: (s.catIndex + 1) % 5 }; });
+    }, 3000);
+    this._galTimer = setInterval(function () {
+      if (!self.state.galleryPaused) self.setState(function (s) { return { galleryIndex: (s.galleryIndex + 1) % 4 }; });
+    }, 3600);
+    this._testiTimer = setInterval(function () {
+      if (!self.state.testiPaused) self.setState(function (s) { return { testiIndex: (s.testiIndex + 1) % 5 }; });
+    }, 5200);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('scroll', this._onScroll);
+    clearInterval(this._heroTimer);
+    clearInterval(this._catTimer);
+    clearInterval(this._galTimer);
+    clearInterval(this._testiTimer);
+  }
+
+  renderVals() {
+    var self = this;
+    var s = this.state;
+
+    var PATH = {
+      broom: 'M9 3 L16 10 M16 10 L21.5 15.5 L10.5 21 L6.5 17 Z M7 15.5 L11.5 20 M9.5 13.5 L14 18',
+      snow: 'M12 2 L12 22 M5 6 L19 18 M19 6 L5 18',
+      bolt: 'M13 2 L4 14 L11 14 L9 22 L20 10 L13 10 Z',
+      wrench: 'M14.7 6.3a4 4 0 1 1-5.4 5.4L5 16v3h3l4.3-4.3a4 4 0 0 1 5.4-5.4l-2.2 2.2-1.6-1.6 2.2-2.2z',
+      roller: 'M5.2 4H15.8A1.2 1.2 0 0 1 17 5.2V7.8A1.2 1.2 0 0 1 15.8 9H5.2A1.2 1.2 0 0 1 4 7.8V5.2A1.2 1.2 0 0 1 5.2 4Z M10.5 9L10.5 14 M10.5 14L17 14 M17 14L17 20',
+      hammer: 'M6 16.5L15.5 7A2 2 0 0 1 18.3 7L19 7.7A2 2 0 0 1 19 10.5L9.5 20Z M4 20L7.5 16.5 M13 8L16 5L18 7L15 10',
+      gear: 'M9 12A3 3 0 1 0 15 12A3 3 0 1 0 9 12Z M12 3L12 5 M12 19L12 21 M4.2 7.8L5.9 8.8 M18.1 15.2L19.8 16.2 M3 12L5 12 M19 12L21 12 M4.2 16.2L5.9 15.2 M18.1 8.8L19.8 7.8 M7.8 4.2L8.8 5.9 M15.2 18.1L16.2 19.8',
+      leaf: 'M12 3C7 5 4 9.5 4 13.5A8 8 0 0 0 12 21A8 8 0 0 0 20 13.5C20 9.5 17 5 12 3Z M12 21L12 9'
+    };
+
+    var TINT_P = 'var(--primary-light)';
+    var TINT_PD = 'var(--primary-dark)';
+    var TINT_A = 'var(--accent-light)';
+    var TINT_AD = 'var(--accent-dark)';
+
+    /* ---------- header ---------- */
+    var headerNavStyle = 'display:flex;align-items:center;gap:36px;transition:opacity 260ms ease, transform 260ms ease;' +
+      (s.docked ? 'opacity:0;pointer-events:none;transform:translateY(-6px);position:absolute;' : 'opacity:1;pointer-events:auto;transform:translateY(0);position:relative;');
+    var headerSearchStyle = 'border-radius:100px;padding:6px 6px 6px 16px;display:flex;align-items:center;gap:10px;position:absolute;left:50%;max-width:460px;width:100%;transition:opacity 260ms ease, transform 260ms ease;transform:translateX(-50%) ' +
+      (s.docked ? 'translateY(0);' : 'translateY(-6px);') +
+      (s.docked ? 'opacity:1;pointer-events:auto;' : 'opacity:0;pointer-events:none;');
+
+    /* ---------- hero ---------- */
+    var heroSlides = [
+      { headline: 'Home services, done right by pros near you.', sub: 'Compare skilled, background-checked electricians, plumbers, cleaners and more — book directly, no middlemen markup.', tint: TINT_P },
+      { headline: 'From a leaky tap to a full rewire — sorted.', sub: 'Post a job once and compare quotes from verified local pros within minutes.', tint: TINT_A },
+      { headline: 'A spotless home, on your schedule.', sub: 'Book trusted, rated cleaning pros for a one-time deep clean or a regular routine.', tint: TINT_P }
+    ];
+    var heroData = heroSlides[s.heroSlide];
+    var heroCardStyle = 'position:relative;overflow:hidden;height:520px;border-radius:32px;display:flex;align-items:center;padding:0 64px;transition:background 500ms ease;background:' + heroData.tint + ';';
+    var heroDots = heroSlides.map(function (_, i) {
+      return {
+        dotStyle: i === s.heroSlide ? 'width:22px;background:var(--primary);' : 'width:8px;background:rgba(0,0,0,0.15);',
+        pick: function () { self.setState({ heroSlide: i }); }
+      };
+    });
+
+    /* ---------- how it works ---------- */
+    var stepsData = [
+      { n: 1, title: 'Tell us what you need', desc: 'Pick a category and share a few details about the job.' },
+      { n: 2, title: 'Compare trusted pros nearby', desc: 'See ratings, rates and reviews from your area.' },
+      { n: 3, title: 'Book & pay securely', desc: 'Confirm a time and pay safely through Kaaj.' }
+    ];
+    var steps = stepsData.map(function (st, i) {
+      return {
+        n: st.n, title: st.title, desc: st.desc,
+        wrapStyle: i === s.stepActive ? 'opacity:1;' : 'opacity:0.4;',
+        numStyle: i === s.stepActive ? 'background:var(--primary);color:#fff;' : 'background:var(--primary-light);color:var(--primary-dark);',
+        pick: function () { self.setState({ stepActive: i }); }
+      };
+    });
+    var iconOff = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transition:opacity 300ms ease;';
+
+    /* ---------- categories ---------- */
+    var categoriesData = [
+      { label: 'House Cleaning', count: '1,400+ pros', iconPath: PATH.broom, tint: TINT_P, tintDark: TINT_PD },
+      { label: 'AC Service & Repair', count: '980+ pros', iconPath: PATH.snow, tint: TINT_A, tintDark: TINT_AD },
+      { label: 'Electrician', count: '1,150+ pros', iconPath: PATH.bolt, tint: TINT_P, tintDark: TINT_PD },
+      { label: 'Plumber', count: '890+ pros', iconPath: PATH.wrench, tint: TINT_A, tintDark: TINT_AD },
+      { label: 'Painter', count: '620+ pros', iconPath: PATH.roller, tint: TINT_P, tintDark: TINT_PD },
+      { label: 'Carpenter', count: '540+ pros', iconPath: PATH.hammer, tint: TINT_A, tintDark: TINT_AD },
+      { label: 'Appliance Repair', count: '410+ pros', iconPath: PATH.gear, tint: TINT_P, tintDark: TINT_PD },
+      { label: 'Gardening & Landscaping', count: '360+ pros', iconPath: PATH.leaf, tint: TINT_A, tintDark: TINT_AD }
+    ];
+    var CAT_STEP = 236;
+    var catTrackStyle = 'transform:translateX(' + (-(s.catIndex * CAT_STEP)) + 'px);';
+
+    /* ---------- providers ---------- */
+    var providersData = [
+      { name: 'Rahim K.', role: 'Electrician', rating: '4.9', reviews: 212, tag1: 'Wiring', tag2: 'Fault fixing', rate: '$18/hr', distance: '2.4 km', iconPath: PATH.bolt, tint: TINT_P, tintDark: TINT_PD },
+      { name: 'Anika S.', role: 'House Cleaning', rating: '5.0', reviews: 348, tag1: 'Deep clean', tag2: 'Move-out', rate: '$15/hr', distance: '1.1 km', iconPath: PATH.broom, tint: TINT_A, tintDark: TINT_AD },
+      { name: 'Farhan A.', role: 'Plumber', rating: '4.8', reviews: 156, tag1: 'Leak repair', tag2: 'Fittings', rate: '$20/hr', distance: '3.6 km', iconPath: PATH.wrench, tint: TINT_P, tintDark: TINT_PD },
+      { name: 'Mim T.', role: 'Painter', rating: '4.9', reviews: 97, tag1: 'Interior', tag2: 'Texture', rate: '$17/hr', distance: '4.2 km', iconPath: PATH.roller, tint: TINT_A, tintDark: TINT_AD },
+      { name: 'Karim H.', role: 'Carpenter', rating: '4.7', reviews: 124, tag1: 'Furniture', tag2: 'Repairs', rate: '$19/hr', distance: '2.9 km', iconPath: PATH.hammer, tint: TINT_P, tintDark: TINT_PD },
+      { name: 'Nusrat J.', role: 'AC Service', rating: '4.9', reviews: 201, tag1: 'Servicing', tag2: 'Installation', rate: '$22/hr', distance: '1.8 km', iconPath: PATH.snow, tint: TINT_A, tintDark: TINT_AD },
+      { name: 'Emon R.', role: 'Appliance Repair', rating: '4.6', reviews: 58, tag1: 'Fridge', tag2: 'Washer', rate: '$16/hr', distance: '3.1 km', iconPath: PATH.gear, tint: TINT_P, tintDark: TINT_PD },
+      { name: 'Priya D.', role: 'Gardening', rating: '5.0', reviews: 77, tag1: 'Landscaping', tag2: 'Upkeep', rate: '$14/hr', distance: '2.2 km', iconPath: PATH.leaf, tint: TINT_A, tintDark: TINT_AD }
+    ];
+    var providers = s.providersShowAll ? providersData : providersData.slice(0, 4);
+    var providersToggleLabel = s.providersShowAll ? 'Show fewer pros' : 'View more pros';
+    var toggleProviders = function () { self.setState(function (st) { return { providersShowAll: !st.providersShowAll }; }); };
+
+    /* ---------- gallery ---------- */
+    var galleryData = {
+      home: [
+        { label: 'House Cleaning', iconPath: PATH.broom, tint: TINT_P, tintDark: TINT_PD },
+        { label: 'Plumber', iconPath: PATH.wrench, tint: TINT_A, tintDark: TINT_AD },
+        { label: 'AC Service & Repair', iconPath: PATH.snow, tint: TINT_P, tintDark: TINT_PD },
+        { label: 'Appliance Repair', iconPath: PATH.gear, tint: TINT_A, tintDark: TINT_AD },
+        { label: 'Painter', iconPath: PATH.roller, tint: TINT_P, tintDark: TINT_PD },
+        { label: 'Carpenter', iconPath: PATH.hammer, tint: TINT_A, tintDark: TINT_AD }
+      ],
+      recommended: [
+        { label: 'Electrician', iconPath: PATH.bolt, tint: TINT_P, tintDark: TINT_PD },
+        { label: 'AC Service & Repair', iconPath: PATH.snow, tint: TINT_A, tintDark: TINT_AD },
+        { label: 'Gardening & Landscaping', iconPath: PATH.leaf, tint: TINT_P, tintDark: TINT_PD },
+        { label: 'House Cleaning', iconPath: PATH.broom, tint: TINT_A, tintDark: TINT_AD },
+        { label: 'Appliance Repair', iconPath: PATH.gear, tint: TINT_P, tintDark: TINT_PD },
+        { label: 'Painter', iconPath: PATH.roller, tint: TINT_A, tintDark: TINT_AD }
+      ],
+      trending: [
+        { label: 'AC Service & Repair', iconPath: PATH.snow, tint: TINT_P, tintDark: TINT_PD },
+        { label: 'House Cleaning', iconPath: PATH.broom, tint: TINT_A, tintDark: TINT_AD },
+        { label: 'Electrician', iconPath: PATH.bolt, tint: TINT_P, tintDark: TINT_PD },
+        { label: 'Plumber', iconPath: PATH.wrench, tint: TINT_A, tintDark: TINT_AD },
+        { label: 'Gardening & Landscaping', iconPath: PATH.leaf, tint: TINT_P, tintDark: TINT_PD },
+        { label: 'Carpenter', iconPath: PATH.hammer, tint: TINT_A, tintDark: TINT_AD }
+      ]
+    };
+    var currentGallery = galleryData[s.galleryTab];
+    var GAL_STEP = 296;
+    var galTrackStyle = 'transform:translateX(' + (-(s.galleryIndex * GAL_STEP)) + 'px);';
+    var tabBase = 'padding:10px 20px;border-radius:100px;font-size:14px;font-weight:700;transition:all 200ms ease;';
+    var tabActive = tabBase + 'background:var(--primary);color:#fff;';
+    var tabInactive = tabBase + 'background:#fff;color:var(--text-muted);border:1px solid var(--line);';
+    var pickTab = function (tab) { self.setState({ galleryTab: tab, galleryIndex: 0 }); };
+
+    /* ---------- testimonials ---------- */
+    var testimonialsData = [
+      { name: 'Tanvir R.', role: 'Homeowner, Banani', quote: 'Found a great electrician within the hour. Kaaj made comparing pros ridiculously easy.' },
+      { name: 'Farzana H.', role: 'Homeowner, Gulshan', quote: 'Booked a deep clean before guests arrived. The pro was punctual, thorough, and the price matched the quote exactly.' },
+      { name: 'Imran K.', role: 'Small business owner', quote: 'Used Kaaj to find an AC technician for our office. Quick response, fair pricing.' },
+      { name: 'Nadia S.', role: 'Homeowner, Dhanmondi', quote: 'Love that I can see real reviews before booking. No more guessing who to trust.' },
+      { name: 'Shafiq M.', role: 'Landlord', quote: 'I manage repairs across three rental units through Kaaj now. Saves me hours every month.' }
+    ];
+    var testi = testimonialsData[s.testiIndex];
+    var testiDots = testimonialsData.map(function (_, i) {
+      return {
+        dotStyle: i === s.testiIndex ? 'width:20px;background:var(--primary);' : 'width:8px;background:var(--line);',
+        pick: function () { self.setState({ testiIndex: i }); }
+      };
+    });
+
+    /* ---------- faq ---------- */
+    var faqData = [
+      { q: 'How do I know a service pro is trustworthy?', a: 'Every professional on Kaaj completes ID verification and a background check before they can accept jobs, and their public rating reflects real completed work.' },
+      { q: 'How much does it cost to use Kaaj?', a: 'Browsing and requesting quotes is completely free. Professionals pay a small service fee only when they complete a paid job.' },
+      { q: 'Which areas does Kaaj currently serve?', a: 'We’re live across Dhaka and expanding to more cities soon.' },
+      { q: 'How do I become a service provider on Kaaj?', a: 'Visit the Become a Pro page, tell us your skills and service area, and complete a short verification step.' },
+      { q: 'What happens if I’m not happy with the service?', a: 'Reach out to our support team within 48 hours of the job and we’ll help make it right, including a redo or refund where applicable.' },
+      { q: 'How do payments work?', a: 'You pay securely through Kaaj once the job is booked. Funds are only released to the professional after the job is marked complete.' },
+      { q: 'Can I book the same pro for recurring service?', a: 'Yes — after your first job, you can rebook the same professional directly from your history.' },
+      { q: 'Is there a Kaaj mobile app?', a: 'Yes, the Kaaj app is available on Android and iOS with the same booking experience as the website.' }
+    ];
+    var faqVisibleData = s.faqShowMore ? faqData : faqData.slice(0, 6);
+    var faq = faqVisibleData.map(function (item, i) {
+      var open = s.faqOpen === i;
+      return {
+        q: item.q, a: item.a,
+        answerStyle: open ? 'max-height:220px;opacity:1;padding-top:12px;' : 'max-height:0px;opacity:0;padding-top:0px;',
+        chevronStyle: open ? 'display:inline-flex;transform:rotate(180deg);' : 'display:inline-flex;transform:rotate(0deg);',
+        toggle: function () { self.setState(function (st) { return { faqOpen: st.faqOpen === i ? -1 : i }; }); }
+      };
+    });
+    var faqToggleLabel = s.faqShowMore ? 'Show fewer questions' : 'Show more questions';
+    var toggleFaqMore = function () { self.setState(function (st) { return { faqShowMore: !st.faqShowMore }; }); };
+
+    return {
+      headerNavStyle: headerNavStyle,
+      headerSearchStyle: headerSearchStyle,
+
+      heroData: heroData,
+      heroCardStyle: heroCardStyle,
+      heroDots: heroDots,
+      heroPrev: function () { self.setState(function (st) { return { heroSlide: (st.heroSlide + 2) % 3 }; }); },
+      heroNext: function () { self.setState(function (st) { return { heroSlide: (st.heroSlide + 1) % 3 }; }); },
+      onHeroEnter: function () { self.setState({ heroPaused: true }); },
+      onHeroLeave: function () { self.setState({ heroPaused: false }); },
+
+      steps: steps,
+      activeStepNum: stepsData[s.stepActive].n,
+      step0IconStyle: iconOff + (s.stepActive === 0 ? 'opacity:1;' : 'opacity:0;'),
+      step1IconStyle: iconOff + (s.stepActive === 1 ? 'opacity:1;' : 'opacity:0;'),
+      step2IconStyle: iconOff + (s.stepActive === 2 ? 'opacity:1;' : 'opacity:0;'),
+
+      categories: categoriesData,
+      catTrackStyle: catTrackStyle,
+      catPrev: function () { self.setState(function (st) { return { catIndex: (st.catIndex + 4) % 5 }; }); },
+      catNext: function () { self.setState(function (st) { return { catIndex: (st.catIndex + 1) % 5 }; }); },
+      onCatEnter: function () { self.setState({ catPaused: true }); },
+      onCatLeave: function () { self.setState({ catPaused: false }); },
+
+      providers: providers,
+      providersToggleLabel: providersToggleLabel,
+      toggleProviders: toggleProviders,
+
+      tabHomeStyle: s.galleryTab === 'home' ? tabActive : tabInactive,
+      tabRecStyle: s.galleryTab === 'recommended' ? tabActive : tabInactive,
+      tabTrendStyle: s.galleryTab === 'trending' ? tabActive : tabInactive,
+      pickHome: function () { pickTab('home'); },
+      pickRec: function () { pickTab('recommended'); },
+      pickTrend: function () { pickTab('trending'); },
+      galleryItems: currentGallery,
+      galTrackStyle: galTrackStyle,
+      onGalEnter: function () { self.setState({ galleryPaused: true }); },
+      onGalLeave: function () { self.setState({ galleryPaused: false }); },
+      galPrev: function () { self.setState(function (st) { return { galleryIndex: (st.galleryIndex + 3) % 4 }; }); },
+      galNext: function () { self.setState(function (st) { return { galleryIndex: (st.galleryIndex + 1) % 4 }; }); },
+
+      testi: testi,
+      testiDots: testiDots,
+      onTestiEnter: function () { self.setState({ testiPaused: true }); },
+      onTestiLeave: function () { self.setState({ testiPaused: false }); },
+
+      faq: faq,
+      faqToggleLabel: faqToggleLabel,
+      toggleFaqMore: toggleFaqMore
+    };
+  }
+}
+</script>
+</body>
+</html>
