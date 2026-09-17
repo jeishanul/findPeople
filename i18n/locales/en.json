@@ -88,7 +88,8 @@
     "howItWorks": "How it works",
     "browseServices": "Browse services",
     "login": "Log in",
-    "signup": "Sign up"
+    "signup": "Sign up",
+    "dashboard": "Dashboard"
   },
   "footer": {
     "tagline": "Connecting skilled local professionals with people who need work done.",
@@ -411,6 +412,381 @@
       "nusrat-jahan-review-1": { "comment": "Serviced two AC units in under an hour each. Cooling noticeably better." },
       "emon-rahman-review-1": { "comment": "Diagnosed our washer issue in minutes and had the part on hand." },
       "priya-das-review-1": { "comment": "Our small garden has never looked better. Reliable and easy to schedule." }
+    }
+  },
+  "dashboard": {
+    "sidebar": {
+      "general": "General",
+      "asProvider": "As a provider",
+      "asConsumer": "As a consumer",
+      "dashboard": "Dashboard",
+      "messages": "Messages",
+      "notifications": "Notifications",
+      "myProfile": "My profile",
+      "kyc": "Verification",
+      "kycPending": "Pending",
+      "myServices": "My services",
+      "clientsServed": "Clients served",
+      "earnings": "Earnings",
+      "browseServices": "Browse",
+      "alwaysOn": "Open",
+      "myPurchases": "My purchases",
+      "savedProviders": "Saved providers",
+      "settings": "Settings",
+      "logOut": "Log out"
+    },
+    "roleSwitch": {
+      "provider": "Provider",
+      "consumer": "Consumer"
+    },
+    "dualRoleBanner": {
+      "title": "Every FindPeople account can both offer and book services",
+      "body": "Switching your view only changes this dashboard — Browse Services and My Purchases stay available no matter which mode you're in.",
+      "cta": "Browse services"
+    },
+    "overview": {
+      "title": "Dashboard",
+      "greeting": "Welcome back, {name}",
+      "provider": {
+        "kpi": {
+          "activeGigs": "Active gigs",
+          "earnings": "Earnings this month",
+          "earningsSub": "↑ {percent}% vs last month",
+          "clientsServed": "Clients served",
+          "clientsServedSub": "{count} repeat clients",
+          "rating": "Average rating",
+          "ratingSub": "{count} reviews"
+        },
+        "kycNudge": {
+          "title": "Identity verification pending",
+          "body": "Complete KYC to start receiving bookings and get paid out.",
+          "cta": "Complete verification"
+        },
+        "kycVerified": {
+          "title": "Identity verified",
+          "body": "You're all set to receive bookings and get paid out."
+        },
+        "quickActions": {
+          "addService": "Add a new service",
+          "updateAvailability": "Update availability",
+          "finishKyc": "Finish KYC verification"
+        },
+        "recentTable": {
+          "heading": "Recently served clients"
+        }
+      },
+      "consumer": {
+        "kpi": {
+          "activeOrders": "Active orders",
+          "activeOrdersSub": "{count} in progress",
+          "totalSpent": "Total spent",
+          "totalSpentSub": "Across {count} orders",
+          "providersHired": "Providers hired",
+          "providersHiredSub": "{count} booked twice",
+          "savedProviders": "Saved providers",
+          "savedProvidersSub": "{count} available now"
+        },
+        "paymentNudge": {
+          "title": "Payment method on file",
+          "body": "Visa •••• 4471 — used for your last 3 bookings.",
+          "cta": "Manage payment methods"
+        },
+        "quickActions": {
+          "browse": "Browse services",
+          "message": "Message a provider",
+          "review": "Leave a review"
+        },
+        "recentTable": {
+          "heading": "Recent purchases"
+        }
+      },
+      "activity": {
+        "heading": "Recent activity",
+        "viewAll": "View all",
+        "hoursAgo": "{count}h ago",
+        "daysAgo": "{count}d ago",
+        "new_booking": "New booking from {name}",
+        "payment_received": "Payment received — ${amount} for {category}",
+        "review_received": "{rating}-star review from {name}",
+        "new_message": "New message from {name}",
+        "order_completed": "Order completed with {name}",
+        "refund_processed": "Refund processed — ${amount}",
+        "new_order": "Booked {category} with {name}"
+      }
+    },
+    "table": {
+      "client": "Client",
+      "provider": "Provider",
+      "service": "Service",
+      "date": "Date",
+      "amount": "Amount",
+      "status": "Status",
+      "rating": "Rating",
+      "message": "Message",
+      "bookAgain": "Book again",
+      "repeatBadge": "Repeat",
+      "viewAll": "View all"
+    },
+    "status": {
+      "completed": "Completed",
+      "upcoming": "Upcoming",
+      "in_progress": "In progress",
+      "cancelled": "Cancelled"
+    },
+    "clients": {
+      "title": "Clients served",
+      "subtitle": "Everyone you've completed a booking for, in one place",
+      "summary": {
+        "total": "Total clients served",
+        "repeat": "Repeat clients",
+        "earned": "Total earned from clients"
+      },
+      "filters": {
+        "all": "All",
+        "completed": "Completed",
+        "upcoming": "Upcoming",
+        "cancelled": "Cancelled"
+      },
+      "searchPlaceholder": "Search clients",
+      "empty": "No clients match this filter yet."
+    },
+    "purchases": {
+      "title": "My purchases",
+      "subtitle": "Every service you've booked, and who you booked it from",
+      "browseMore": "Browse more services",
+      "sellBanner": {
+        "title": "Have a skill of your own? You can list it too.",
+        "body": "Buying and selling both live on the same account — no separate sign-up needed.",
+        "cta": "Set up my provider profile"
+      },
+      "summary": {
+        "totalSpent": "Total spent",
+        "providersHired": "Providers hired",
+        "activeOrders": "Active orders"
+      },
+      "filters": {
+        "all": "All",
+        "completed": "Completed",
+        "in_progress": "In progress",
+        "cancelled": "Cancelled"
+      },
+      "empty": "No purchases match this filter yet."
+    },
+    "profile": {
+      "title": "My profile & verification",
+      "subtitle": "Manage how clients see you, and verify your identity to get paid",
+      "tabs": {
+        "details": "Profile details",
+        "kyc": "KYC verification · required"
+      },
+      "changePhoto": "Change photo",
+      "memberSince": "Member since {date}",
+      "ratingSummary": "{rating} average rating · {count} reviews",
+      "clientsServedSummary": "{count} clients served",
+      "sections": {
+        "basicInfo": "Basic information",
+        "skills": "Categories & skills",
+        "rateAvailability": "Rate & availability"
+      },
+      "fields": {
+        "fullName": "Full name",
+        "headline": "Professional headline",
+        "bio": "Bio",
+        "phone": "Phone",
+        "email": "Email",
+        "serviceArea": "Service area",
+        "hourlyRate": "Hourly rate",
+        "minVisitFee": "Minimum visit fee",
+        "responseTime": "Response time",
+        "availability": "Weekly availability"
+      },
+      "addSkill": "Add skill",
+      "cancel": "Cancel",
+      "save": "Save changes",
+      "kyc": {
+        "mandatoryTitle": "Verification is mandatory before you can accept bookings",
+        "mandatoryBody": "FindPeople verifies every service provider's identity to keep clients safe. Payouts are held until all three steps are approved.",
+        "statusVerified": "Verified",
+        "statusInReview": "In review",
+        "statusNotStarted": "Not started",
+        "steps": {
+          "identity": {
+            "title": "Government-issued ID",
+            "verifiedBody": "Verified and confirmed.",
+            "pendingBody": "Upload a driver's license or passport."
+          },
+          "selfie": {
+            "title": "Selfie verification",
+            "inReviewBody": "Submitted — our team typically reviews within 24 hours.",
+            "pendingBody": "Take a quick selfie to confirm it's really you."
+          },
+          "address": {
+            "title": "Proof of address",
+            "pendingBody": "Upload a recent utility bill or bank statement (last 3 months)."
+          }
+        },
+        "dropzone": "Drag a file here, or",
+        "browseFiles": "Browse files",
+        "complianceNote": "Your documents are encrypted and only used for identity verification, per our Trust & Safety policy."
+      }
+    },
+    "days": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    },
+    "messages": {
+      "title": "Messages",
+      "subtitle": "Clients and providers, in one inbox",
+      "searchPlaceholder": "Search conversations",
+      "roleClient": "Client",
+      "roleProvider": "Provider",
+      "viewBooking": "View booking",
+      "composerPlaceholder": "Write a message...",
+      "send": "Send",
+      "hoursAgo": "{count}h",
+      "daysAgo": "{count}d",
+      "online": "Online",
+      "attachPhotoVideo": "Photo & video",
+      "attachDocument": "Document",
+      "addEmoji": "Add emoji",
+      "attachFile": "Attach a file",
+      "messageOptions": "Message options",
+      "deleteMessage": "Delete message",
+      "removeAttachment": "Remove attachment",
+      "statusSent": "Sent",
+      "statusDelivered": "Delivered",
+      "statusSeen": "Seen"
+    },
+    "notificationsPage": {
+      "title": "Notifications",
+      "subtitle": "Bookings, payments, reviews and messages, all in one feed",
+      "markAllRead": "Mark all as read",
+      "filters": {
+        "all": "All",
+        "bookings": "Bookings",
+        "payments": "Payments",
+        "messages": "Messages"
+      },
+      "today": "Today",
+      "earlier": "Earlier",
+      "hoursAgo": "{count}h ago",
+      "daysAgo": "{count}d ago",
+      "empty": "No notifications in this filter yet.",
+      "new_booking": { "title": "New booking from {name}", "body": "{category} — confirm or reschedule." },
+      "payment_received": { "title": "Payment received", "body": "${amount} for {category} — {name}" },
+      "new_message": { "title": "New message from {name}", "body": "Open Messages to reply." },
+      "review_received": { "title": "{rating}-star review from {name}", "body": "See what they said in Clients served." },
+      "order_completed": { "title": "Order completed", "body": "{category} with {name}" },
+      "kyc_submitted": { "title": "KYC selfie submitted for review", "body": "We'll email you within 24 hours with the result." },
+      "refund_processed": { "title": "Refund processed", "body": "${amount} refunded" },
+      "booking_reminder": { "title": "Reminder: booking with {name} tomorrow", "body": "{category}" }
+    },
+    "services": {
+      "title": "My services",
+      "subtitle": "What you list is what clients find you for",
+      "addService": "Add a new service",
+      "summary": {
+        "active": "Active services",
+        "bookings": "Bookings this month",
+        "rating": "Average rating"
+      },
+      "edit": "Edit",
+      "preview": "Preview",
+      "resume": "Resume",
+      "bookingsCount": "{count} bookings",
+      "statusActive": "Active",
+      "statusPaused": "Paused"
+    },
+    "earnings": {
+      "title": "Earnings",
+      "subtitle": "Track what you've made and manage payouts",
+      "summary": {
+        "available": "Available balance",
+        "availableSub": "Ready to withdraw",
+        "pending": "Pending clearance",
+        "pendingSub": "Clears in {days} days",
+        "paidOut": "Paid out this month",
+        "lifetime": "Lifetime earnings"
+      },
+      "chartHeading": "Earnings, last 6 months",
+      "payoutMethodHeading": "Payout method",
+      "withdraw": "Withdraw ${amount}",
+      "changePayoutMethod": "Change payout method",
+      "transactionsHeading": "Recent transactions",
+      "table": {
+        "description": "Description",
+        "date": "Date",
+        "type": "Type",
+        "amount": "Amount"
+      },
+      "types": {
+        "booking": "Booking",
+        "payout": "Payout",
+        "refund": "Refund"
+      }
+    },
+    "savedProviders": {
+      "title": "Saved providers",
+      "subtitle": "Your shortlist — book them again in a couple of taps",
+      "count": "{count} saved providers",
+      "message": "Message",
+      "bookNow": "Book now",
+      "remove": "Remove from saved",
+      "empty": "No saved providers left.",
+      "browse": "Browse services",
+      "neverBooked": "Never booked"
+    },
+    "settings": {
+      "title": "Settings",
+      "subtitle": "Account, security, notifications and payment preferences",
+      "account": {
+        "heading": "Account",
+        "fullName": "Full name",
+        "email": "Email",
+        "phone": "Phone",
+        "editProfile": "Edit profile",
+        "change": "Change"
+      },
+      "security": {
+        "heading": "Security",
+        "password": "Password",
+        "passwordChanged": "Last changed {time}",
+        "changePassword": "Change password",
+        "twoFa": "Two-factor authentication",
+        "twoFaBody": "Add an extra layer of security at login"
+      },
+      "notifications": {
+        "heading": "Notification preferences",
+        "bookingRequests": "New booking requests",
+        "paymentsPayouts": "Payments & payouts",
+        "messages": "Messages",
+        "marketing": "Product tips & marketing"
+      },
+      "payment": {
+        "heading": "Payment methods",
+        "addMethod": "Add method",
+        "default": "Default",
+        "makeDefault": "Make default",
+        "remove": "Remove",
+        "expires": "Expires {date}"
+      },
+      "language": {
+        "heading": "Language & region",
+        "current": "Language",
+        "change": "Change"
+      },
+      "danger": {
+        "heading": "Danger zone",
+        "deactivate": "Deactivate account",
+        "deactivateBody": "Hide your profile and pause bookings temporarily",
+        "delete": "Delete account",
+        "deleteBody": "Permanently remove your account and all data"
+      }
     }
   }
 }

@@ -69,7 +69,25 @@ export default defineNuxtConfig({
   // Reproduced and confirmed by removing `isr` here. Revisit only after
   // confirming that payload actually gets generated (e.g. after a real
   // `nuxt generate`/CDN-backed cache storage), not just in local preview.
-  routeRules: {},
+  // The logged-in user panel is authenticated/dashboard-style (session-driven,
+  // not content SEO wants indexed) — `ssr: false` per CLAUDE.md's rendering
+  // guidance for this kind of route, plus an explicit `robots: false` so it's
+  // never indexed regardless of the site-wide `indexable` setting. Each panel
+  // page is a clean top-level route (e.g. `/profile`, not `/dashboard/profile`)
+  // rather than nested under one prefix, so every one of them is listed here
+  // individually instead of a single `/dashboard/**` wildcard.
+  routeRules: {
+    '/dashboard': { ssr: false, robots: false },
+    '/profile': { ssr: false, robots: false },
+    '/clients': { ssr: false, robots: false },
+    '/purchases': { ssr: false, robots: false },
+    '/messages': { ssr: false, robots: false },
+    '/notifications': { ssr: false, robots: false },
+    '/services': { ssr: false, robots: false },
+    '/earnings': { ssr: false, robots: false },
+    '/saved-providers': { ssr: false, robots: false },
+    '/settings': { ssr: false, robots: false },
+  },
 
   devServer: {
     port: 3838,
@@ -155,13 +173,25 @@ export default defineNuxtConfig({
   },
 
   // Security headers (CSP, HSTS, X-Frame-Options, etc.) via nuxt-security.
-  // Using the module's defaults for everything except CORS: the module's own
-  // default binds `corsHandler.origin` to the *dev server* URL even in a
-  // production build, which never matches a real deployed domain. Bind it to
-  // our actual site URL explicitly instead of relying on that mismatch.
+  // Using the module's defaults for everything except CORS and two CSP
+  // directives: the module's own CORS default binds `corsHandler.origin` to
+  // the *dev server* URL even in a production build, which never matches a
+  // real deployed domain, so bind it to our actual site URL instead. The
+  // messages composer lets a person attach a photo/video straight from their
+  // device (see `DashboardMessageThread`) and previews it via
+  // `URL.createObjectURL()` before anything is sent anywhere — that preview
+  // is a `blob:` URL, which the default `img-src`/`media-src` (`'self'
+  // data:'` / `'self'`) blocks outright. Extending just those two directives
+  // is enough; nothing else about the default policy changes.
   security: {
     corsHandler: {
       origin: process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3838',
+    },
+    headers: {
+      contentSecurityPolicy: {
+        'img-src': ['\'self\'', 'data:', 'blob:'],
+        'media-src': ['\'self\'', 'blob:'],
+      },
     },
   },
 

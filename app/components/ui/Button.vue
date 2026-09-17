@@ -5,27 +5,28 @@ const props = withDefaults(
     variant?: 'primary' | 'secondary' | 'ghost'
     type?: 'button' | 'submit' | 'reset'
     disabled?: boolean
+    /** `sm` for compact contexts (table rows, inline actions) — a prop, not
+     * a padding/text-size override, since combining Tailwind utilities that
+     * touch the same property that way is order-dependent and unreliable. */
+    size?: 'sm' | 'md'
   }>(),
   {
     variant: 'primary',
     type: 'button',
     disabled: false,
+    size: 'md',
   },
 )
 
-const variantClasses: Record<NonNullable<typeof props.variant>, string> = {
-  primary: 'bg-brand-600 text-white hover:bg-brand-700',
-  secondary: 'bg-brand-100 text-brand-700 hover:bg-brand-100/80',
-  ghost: 'bg-transparent text-brand-700 hover:bg-brand-50',
-}
+const variantClasses = BUTTON_VARIANT_CLASS
+const sizeClasses = BUTTON_SIZE_CLASS
 </script>
 
 <template>
   <button
     :type="props.type"
     :disabled="props.disabled"
-    class="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-    :class="variantClasses[props.variant]"
+    :class="[BUTTON_BASE_CLASS, sizeClasses[props.size], 'disabled:cursor-not-allowed disabled:opacity-50', variantClasses[props.variant]]"
   >
     <slot />
   </button>

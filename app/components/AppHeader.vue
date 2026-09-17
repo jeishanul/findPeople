@@ -20,6 +20,7 @@ const showDockedSearch = computed(() => isHomeRoute.value && isDocked.value)
 const { data: categories } = await useApi<ServiceCategory[]>('/categories', { lazy: true, default: () => [] })
 
 const authModal = useAuthModal()
+const session = useSession()
 
 const localePath = useLocalePath()
 function handleDockedSearch({ category, location }: { category: string, location: string }) {
@@ -80,7 +81,24 @@ function handleDockedSearch({ category, location }: { category: string, location
 
       <div class="flex shrink-0 items-center gap-3.5">
         <UiThemeToggle />
-        <div class="flex items-center gap-2.5">
+        <div
+          v-if="session.isAuthenticated.value"
+          class="flex items-center gap-2.5"
+        >
+          <NuxtLinkLocale
+            to="/dashboard"
+            class="flex items-center gap-2 rounded-full py-1 pr-3.5 pl-1 text-sm font-semibold hover:bg-black/5 dark:hover:bg-white/10"
+          >
+            <span class="flex h-8 w-8 items-center justify-center rounded-full bg-brand-600 font-display text-xs font-bold text-white">
+              {{ session.initials.value }}
+            </span>
+            {{ t('nav.dashboard') }}
+          </NuxtLinkLocale>
+        </div>
+        <div
+          v-else
+          class="flex items-center gap-2.5"
+        >
           <UiButton
             variant="ghost"
             @click="authModal.open('login')"

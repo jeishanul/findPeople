@@ -2,8 +2,9 @@
 // Auto-imported as <MarketplaceAuthModal />. Mounted once, site-wide, in
 // `layouts/default.vue` — every "Log in" / "Sign up" / "Message" control
 // anywhere in the app opens this same instance via `useAuthModal()`.
-// UI-only: there's no auth backend yet, so every form prevents the page
-// reload on submit and stops there (see CLAUDE.md — a real submit endpoint
+// UI-only: there's no auth backend yet, so login/register just mark the
+// mock `useSession` authenticated and send the user to the dashboard instead
+// of actually checking anything (see CLAUDE.md — a real submit endpoint
 // needs `security.csrf` turned on at the same time, not bolted on after).
 // The password-reset flow (forgot-password → otp → reset-password) is a
 // client-only simulation for the same reason: the OTP is never checked
@@ -11,6 +12,8 @@
 // "reset" only validates the two password fields against each other.
 const { t } = useI18n()
 const authModal = useAuthModal()
+const session = useSession()
+const localePath = useLocalePath()
 
 const titleId = useId()
 
@@ -112,8 +115,22 @@ function continueToLogin() {
   authModal.setView('login')
 }
 
-function handleSubmit() {
-  // No backend to call yet — see the note above.
+// No backend to call yet (see the note above), so both forms "authenticate"
+// into the same seeded demo account the dashboard mock data describes
+// (`server/utils/dashboardData.ts`'s "Amara Chen") rather than whatever was
+// actually typed, and land on the panel that was just designed for it.
+const DEMO_ACCOUNT_NAME = 'Amara Chen'
+
+function handleLoginSubmit() {
+  session.login(DEMO_ACCOUNT_NAME)
+  authModal.close()
+  navigateTo(localePath('/dashboard'))
+}
+
+function handleRegisterSubmit() {
+  session.login(DEMO_ACCOUNT_NAME)
+  authModal.close()
+  navigateTo(localePath('/dashboard'))
 }
 </script>
 
@@ -186,7 +203,7 @@ function handleSubmit() {
 
       <form
         class="mt-6 flex flex-col gap-4"
-        @submit.prevent="handleSubmit"
+        @submit.prevent="handleLoginSubmit"
       >
         <div>
           <label
@@ -284,7 +301,7 @@ function handleSubmit() {
 
       <form
         class="mt-6 flex flex-col gap-4"
-        @submit.prevent="handleSubmit"
+        @submit.prevent="handleRegisterSubmit"
       >
         <div>
           <label
