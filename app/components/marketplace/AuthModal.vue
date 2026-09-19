@@ -630,10 +630,10 @@ function handleRegisterSubmit() {
         <div class="h-px flex-1 bg-black/10 dark:bg-white/10" />
       </div>
 
-      <div class="flex flex-col gap-2.5">
+      <div class="flex gap-2.5">
         <button
           type="button"
-          class="flex h-[46px] w-full items-center justify-center gap-2.5 rounded-xl border border-black/10 bg-white text-sm font-semibold text-black transition-colors hover:bg-black/5 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+          class="flex h-[46px] w-full min-w-0 items-center justify-center gap-2.5 rounded-xl border border-black/10 bg-white text-sm font-semibold whitespace-nowrap text-black transition-colors hover:bg-black/5 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
           @click="handleLoginSubmit"
         >
           <UiIcon
@@ -645,7 +645,7 @@ function handleRegisterSubmit() {
         </button>
         <button
           type="button"
-          class="flex h-[46px] w-full items-center justify-center gap-2.5 rounded-xl border border-black/10 bg-white text-sm font-semibold text-black transition-colors hover:bg-black/5 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+          class="flex h-[46px] w-full min-w-0 items-center justify-center gap-2.5 rounded-xl border border-black/10 bg-white text-sm font-semibold whitespace-nowrap text-black transition-colors hover:bg-black/5 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
           @click="handleLoginSubmit"
         >
           <UiIcon

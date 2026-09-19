@@ -3,17 +3,27 @@
 // location" field with the Philippines Province -> City/Municipality ->
 // Barangay cascade the client's spec doc calls for, backed by the real
 // vendored dataset served through `/api/locations/*` (see
-// `server/utils/phLocations.ts`) — a single compact trigger + popover
-// (built the same combobox-button pattern as `UiSelectSearch`) rather than
-// three permanently-visible dropdowns, so it drops into the existing search
-// bar/filters layout without changing their shape.
+// `server/utils/phLocations.ts`).
 //
-// The popover is a step wizard, not three stacked selects: only the current
-// step's field is rendered, so the popover stays short instead of growing
-// tall enough to run under whatever section follows it on the page. Picking
-// a value advances to the next step automatically; `Back` returns to an
-// earlier step to change it (without losing it), and `Next` re-advances
-// from there without forcing a re-pick — see `goBack`/`goNext` below.
+// Two presentations, two ways of cascading:
+//
+// `default`/`bare` render a compact trigger + popover (built the same
+// combobox-button pattern as `UiSelectSearch`) so it drops into a search
+// bar/compact filter without changing its shape. It's a step wizard — only
+// the current step's field is in the popover, so it stays short instead of
+// growing tall enough to run under whatever section follows it on the page.
+// Picking a value advances to the next step automatically; `Back` returns to
+// an earlier step without losing it, and `Next` re-advances from there
+// without forcing a re-pick.
+//
+// `inline` (the persistent filter sidebar) skips the trigger/popover and the
+// step machinery entirely — a sidebar has the room to just show every
+// reached field at once. Province is always visible; City appears once a
+// province is picked; Barangay (optional) appears once a city is picked.
+// Changing an earlier field doesn't hide it, but does invalidate what came
+// after it the same way the popover's cascading-clear does (picking a new
+// province clears City/Barangay, so Barangay's `v-if` drops it back out of
+// view until a city is picked again).
 interface LocationOption {
   code: string
   name: string
@@ -23,7 +33,7 @@ withDefaults(
   defineProps<{
     id?: string
     placeholder?: string
-    variant?: 'default' | 'bare'
+    variant?: 'default' | 'bare' | 'inline'
   }>(),
   {
     id: undefined,
@@ -89,16 +99,19 @@ const summary = computed(() => {
 const STEP_ORDER = ['province', 'city', 'barangay'] as const
 type Step = (typeof STEP_ORDER)[number]
 
-const currentStep = ref<Step>('province')
-const stepIndex = computed(() => STEP_ORDER.indexOf(currentStep.value))
-
 // Resume at the first not-yet-chosen step (or the last one, once every step
-// has a value) rather than always restarting at Province.
+// has a value) rather than always restarting at Province — used both as the
+// initial step (so a picker mounted with query-prefilled province/city, e.g.
+// on `/browse`, opens straight to the right step) and again each time the
+// popover variant opens.
 function furthestAvailableStep(): Step {
   if (!provinceCode.value) return 'province'
   if (!cityCode.value) return 'city'
   return 'barangay'
 }
+
+const currentStep = ref<Step>(furthestAvailableStep())
+const stepIndex = computed(() => STEP_ORDER.indexOf(currentStep.value))
 
 function openPicker() {
   currentStep.value = furthestAvailableStep()
@@ -167,6 +180,64 @@ onClickOutside(rootRef, () => (isOpen.value = false))
 
 <template>
   <div
+    v-if="variant === 'inline'"
+    ref="rootRef"
+    class="flex flex-col gap-3.5"
+  >
+    <div>
+      <label
+        :for="`${id}-province`"
+        class="mb-1.5 block text-xs font-bold"
+      >{{ t('marketplace.search.provinceLabel') }}</label>
+      <UiSelectSearch
+        :id="`${id}-province`"
+        v-model="provinceCode"
+        :options="provinceOptions"
+        :placeholder="t('marketplace.search.provincePlaceholder')"
+      />
+    </div>
+
+    <div v-if="provinceCode">
+      <label
+        :for="`${id}-city`"
+        class="mb-1.5 block text-xs font-bold"
+      >{{ t('marketplace.search.cityLabel') }}</label>
+      <UiSelectSearch
+        :id="`${id}-city`"
+        v-model="cityCode"
+        :options="cityOptions"
+        :placeholder="t('marketplace.search.cityPlaceholder')"
+      />
+    </div>
+
+    <div v-if="cityCode">
+      <label
+        :for="`${id}-barangay`"
+        class="mb-1.5 block text-xs font-bold"
+      >
+        {{ t('marketplace.search.barangayLabel') }}
+        <span class="font-normal text-black/40 dark:text-white/40">({{ t('marketplace.search.optional') }})</span>
+      </label>
+      <UiSelectSearch
+        :id="`${id}-barangay`"
+        v-model="barangay"
+        :options="barangayOptions"
+        :placeholder="t('marketplace.search.barangayPlaceholder')"
+      />
+    </div>
+
+    <button
+      v-if="summary"
+      type="button"
+      class="self-start text-xs font-semibold text-black/50 hover:text-black dark:text-white/50 dark:hover:text-white"
+      @click="clearAll"
+    >
+      {{ t('marketplace.search.clearLocation') }}
+    </button>
+  </div>
+
+  <div
+    v-else
     ref="rootRef"
     class="relative"
   >

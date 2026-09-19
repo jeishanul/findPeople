@@ -66,17 +66,15 @@ function resetAll() {
     </div>
 
     <div class="mb-6">
-      <label
-        for="filter-sidebar-location"
-        class="mb-2.5 block text-xs font-bold uppercase tracking-wide text-black/50 dark:text-white/50"
-      >
+      <p class="mb-2.5 text-xs font-bold uppercase tracking-wide text-black/50 dark:text-white/50">
         {{ t('marketplace.filters.location') }}
-      </label>
+      </p>
       <UiLocationPicker
         id="filter-sidebar-location"
         v-model:province="provinceCode"
         v-model:city="cityCode"
         v-model:barangay="barangay"
+        variant="inline"
       />
     </div>
 

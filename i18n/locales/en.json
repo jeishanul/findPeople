@@ -52,8 +52,8 @@
     },
     "social": {
       "divider": "or continue with",
-      "google": "Continue with Google",
-      "facebook": "Continue with Facebook"
+      "google": "Google",
+      "facebook": "Facebook"
     },
     "back": "Back",
     "forgotPassword": {
@@ -144,6 +144,7 @@
       "back": "Back",
       "next": "Next",
       "done": "Done",
+      "optional": "optional",
       "stepOf": "Step {current} of {total}",
       "submit": "Search"
     },
