@@ -96,9 +96,12 @@ const phoneNumber = ref('')
           />
           {{ SUPPORT_EMAIL }}
         </a>
-        <UiButton variant="primary">
+        <NuxtLinkLocale
+          to="/browse"
+          :class="linkButtonClass('primary')"
+        >
           {{ t('marketplace.downloadApp.helpline.requestService') }}
-        </UiButton>
+        </NuxtLinkLocale>
       </div>
     </div>
   </section>

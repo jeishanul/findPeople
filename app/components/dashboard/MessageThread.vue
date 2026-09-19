@@ -13,9 +13,18 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  send: [payload: { text: string, attachment?: MessageAttachment }]
-  delete: [messageId: string]
+  'send': [payload: { text: string, attachment?: MessageAttachment }]
+  'delete': [messageId: string]
+  'send-quote': [payload: { basePriceUsd: number, baseHours: number, extraHourlyRateUsd: number, note: string }]
+  'accept-quote': [messageId: string]
+  'decline-quote': [messageId: string]
 }>()
+
+// A quote only makes sense flowing provider -> client (see
+// `DashboardQuoteFormModal`'s doc comment) — `conversation.role === 'client'`
+// means the account is acting as the provider in this thread.
+const canSendQuote = computed(() => props.conversation.role === 'client')
+const showQuoteForm = ref(false)
 
 const { t } = useI18n()
 
@@ -55,8 +64,14 @@ watch(() => props.conversation.id, () => {
   clearPendingAttachment()
   showAttachMenu.value = false
   showEmojiPicker.value = false
+  showQuoteForm.value = false
   nextTick(scrollToBottom)
 })
+
+function handleQuoteSubmit(payload: { basePriceUsd: number, baseHours: number, extraHourlyRateUsd: number, note: string }) {
+  emit('send-quote', payload)
+  showQuoteForm.value = false
+}
 
 function formatSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`
@@ -170,7 +185,10 @@ function handleKeydown(event: KeyboardEvent) {
           </div>
         </div>
       </div>
-      <NuxtLinkLocale to="/clients">
+      <NuxtLinkLocale
+        v-if="conversation.role === 'client'"
+        to="/clients"
+      >
         <UiTag variant="primary">
           {{ t('dashboard.messages.viewBooking') }}
         </UiTag>
@@ -200,7 +218,14 @@ function handleKeydown(event: KeyboardEvent) {
           />
         </button>
 
+        <DashboardQuoteCard
+          v-if="message.quote"
+          :quote="message.quote"
+          @accept="$emit('accept-quote', message.id)"
+          @decline="$emit('decline-quote', message.id)"
+        />
         <div
+          v-else
           class="max-w-[60%] rounded-2xl px-3.5 py-2.5 text-sm"
           :class="message.fromMe
             ? 'rounded-br-md bg-brand-600 text-white'
@@ -351,6 +376,19 @@ function handleKeydown(event: KeyboardEvent) {
         </div>
       </div>
 
+      <button
+        v-if="canSendQuote"
+        type="button"
+        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-black/50 hover:bg-black/5 hover:text-black dark:text-white/50 dark:hover:bg-white/10 dark:hover:text-white"
+        :aria-label="t('dashboard.messages.sendQuote')"
+        @click="showQuoteForm = true"
+      >
+        <UiIcon
+          name="briefcase"
+          :size="19"
+        />
+      </button>
+
       <div class="relative flex shrink-0 items-center">
         <button
           type="button"
@@ -434,5 +472,11 @@ function handleKeydown(event: KeyboardEvent) {
         />
       </button>
     </form>
+
+    <DashboardQuoteFormModal
+      :open="showQuoteForm"
+      @close="showQuoteForm = false"
+      @submit="handleQuoteSubmit"
+    />
   </div>
 </template>

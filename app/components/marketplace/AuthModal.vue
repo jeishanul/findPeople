@@ -634,6 +634,7 @@ function handleRegisterSubmit() {
         <button
           type="button"
           class="flex h-[46px] w-full items-center justify-center gap-2.5 rounded-xl border border-black/10 bg-white text-sm font-semibold text-black transition-colors hover:bg-black/5 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+          @click="handleLoginSubmit"
         >
           <UiIcon
             name="google"
@@ -645,6 +646,7 @@ function handleRegisterSubmit() {
         <button
           type="button"
           class="flex h-[46px] w-full items-center justify-center gap-2.5 rounded-xl border border-black/10 bg-white text-sm font-semibold text-black transition-colors hover:bg-black/5 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+          @click="handleLoginSubmit"
         >
           <UiIcon
             name="facebook"

@@ -9,6 +9,8 @@ const props = defineProps<{
 
 defineEmits<{
   'toggle-status': [id: string]
+  'edit': [service: ServiceListing]
+  'preview': [service: ServiceListing]
 }>()
 
 const { t } = useI18n()
@@ -43,15 +45,16 @@ const isPaused = computed(() => props.service.status === 'paused')
           </div>
         </div>
       </div>
-      <button
-        type="button"
-        class="shrink-0"
-        @click="$emit('toggle-status', service.id)"
-      >
+      <div class="flex shrink-0 items-center gap-2">
         <UiTag :variant="isPaused ? 'neutral' : 'primary'">
           {{ isPaused ? t('dashboard.services.statusPaused') : t('dashboard.services.statusActive') }}
         </UiTag>
-      </button>
+        <UiToggleSwitch
+          :model-value="!isPaused"
+          :label="isPaused ? t('dashboard.services.activate') : t('dashboard.services.deactivate')"
+          @update:model-value="$emit('toggle-status', service.id)"
+        />
+      </div>
     </div>
 
     <p class="text-[13px] leading-relaxed text-black/60 dark:text-white/60">
@@ -70,24 +73,28 @@ const isPaused = computed(() => props.service.status === 'paused')
         />
         {{ service.rating.toFixed(1) }}
       </span>
-    </div>
-
-    <div class="flex gap-2">
-      <UiButton
-        variant="ghost"
-        size="sm"
-        class="flex-1"
-      >
-        {{ t('dashboard.services.edit') }}
-      </UiButton>
-      <UiButton
-        variant="ghost"
-        size="sm"
-        class="flex-1"
-        @click="isPaused && $emit('toggle-status', service.id)"
-      >
-        {{ isPaused ? t('dashboard.services.resume') : t('dashboard.services.preview') }}
-      </UiButton>
+      <span class="ml-auto flex items-center gap-1">
+        <button
+          type="button"
+          class="flex items-center gap-1.5 rounded-full px-2.5 py-1 font-semibold text-black/60 transition-colors hover:bg-black/5 hover:text-black dark:text-white/60 dark:hover:bg-white/10 dark:hover:text-white"
+          @click="$emit('edit', service)"
+        >
+          <UiIcon
+            name="edit"
+            :size="13"
+          />{{ t('dashboard.services.edit') }}
+        </button>
+        <button
+          type="button"
+          class="flex items-center gap-1.5 rounded-full px-2.5 py-1 font-semibold text-black/60 transition-colors hover:bg-black/5 hover:text-black dark:text-white/60 dark:hover:bg-white/10 dark:hover:text-white"
+          @click="$emit('preview', service)"
+        >
+          <UiIcon
+            name="eye"
+            :size="13"
+          />{{ t('dashboard.services.preview') }}
+        </button>
+      </span>
     </div>
   </div>
 </template>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Conversation, ConversationMessage, MessageAttachment } from '#shared/types/dashboard'
+import type { Conversation, ConversationMessage, MessageAttachment, Quote } from '#shared/types/dashboard'
 
 definePageMeta({
   layout: 'dashboard',
@@ -7,11 +7,20 @@ definePageMeta({
 })
 
 const { t } = useI18n()
+const route = useRoute()
 
-const { data: conversations } = await useApi<Conversation[]>('/dashboard/conversations', {
+const { data: fetchedConversations } = await useApi<Conversation[]>('/dashboard/conversations', {
   key: 'dashboard-conversations',
   default: () => [],
 })
+
+const { localConversations } = useConversations()
+const { acceptQuote } = useBookings()
+
+// Fetched seed conversations plus any created client-side this session (e.g.
+// via "Request a quote" on a provider profile, or "Message" from a
+// Purchases/Clients Served row with no seeded thread) — see `useConversations`.
+const conversations = computed(() => [...(fetchedConversations.value ?? []), ...localConversations.value])
 
 const search = ref('')
 const activeId = ref('')
@@ -23,24 +32,35 @@ const activeId = ref('')
 const messagesByConversation = ref<Record<string, ConversationMessage[]>>({})
 
 watch(conversations, (list) => {
-  if (!list) return
   for (const conversation of list) {
     if (!messagesByConversation.value[conversation.id]) {
       messagesByConversation.value[conversation.id] = [...conversation.messages]
     }
   }
-  if (!activeId.value && list.length > 0) {
-    activeId.value = list[0]!.id
+  if (!activeId.value) {
+    const requested = typeof route.query.conversation === 'string' ? route.query.conversation : undefined
+    const match = requested ? list.find(c => c.id === requested) : undefined
+    activeId.value = match?.id ?? list[0]?.id ?? ''
   }
 }, { immediate: true })
 
+// A table row's "Message" action navigates to `?conversation=<id>` on this
+// same page (Nuxt reuses the component instance rather than remounting it),
+// so react to in-place query changes too, not just the initial load.
+watch(() => route.query.conversation, (value) => {
+  const requested = typeof value === 'string' ? value : undefined
+  if (requested && conversations.value.some(c => c.id === requested)) {
+    activeId.value = requested
+  }
+})
+
 const filteredConversations = computed(() => {
   const query = search.value.trim().toLowerCase()
-  return (conversations.value ?? []).filter(conversation => !query || conversation.personName.toLowerCase().includes(query))
+  return conversations.value.filter(conversation => !query || conversation.personName.toLowerCase().includes(query))
 })
 
 const activeConversation = computed(() =>
-  (conversations.value ?? []).find(conversation => conversation.id === activeId.value) ?? conversations.value?.[0],
+  conversations.value.find(conversation => conversation.id === activeId.value) ?? conversations.value[0],
 )
 
 const activeMessages = computed(() => messagesByConversation.value[activeId.value] ?? [])
@@ -54,15 +74,17 @@ function setMessageStatus(conversationId: string, messageId: string, status: Con
   }
 }
 
-function handleSend({ text, attachment }: { text: string, attachment?: MessageAttachment }) {
-  const conversationId = activeId.value
-  const messageId = `local-${Date.now()}`
-  const message: ConversationMessage = { id: messageId, fromMe: true, text, attachment, status: 'sent' }
-
+function appendMessage(conversationId: string, message: ConversationMessage) {
   messagesByConversation.value = {
     ...messagesByConversation.value,
     [conversationId]: [...(messagesByConversation.value[conversationId] ?? []), message],
   }
+}
+
+function handleSend({ text, attachment }: { text: string, attachment?: MessageAttachment }) {
+  const conversationId = activeId.value
+  const messageId = `local-${Date.now()}`
+  appendMessage(conversationId, { id: messageId, fromMe: true, text, attachment, status: 'sent' })
 
   // Simulate the delivered → seen lifecycle client-side, the same way the
   // rest of this app fakes anything that would need a real backend.
@@ -78,6 +100,33 @@ function handleDelete(messageId: string) {
     ...messagesByConversation.value,
     [conversationId]: list.filter(message => message.id !== messageId),
   }
+}
+
+function handleSendQuote(payload: { basePriceUsd: number, baseHours: number, extraHourlyRateUsd: number, note: string }) {
+  const conversationId = activeId.value
+  const quote: Quote = { id: `quote-${Date.now()}`, ...payload, status: 'pending' }
+  appendMessage(conversationId, { id: `local-${Date.now()}`, fromMe: true, text: '', status: 'sent', quote })
+}
+
+function setQuoteStatus(messageId: string, status: Quote['status']) {
+  const conversationId = activeId.value
+  const list = messagesByConversation.value[conversationId]
+  const message = list?.find(m => m.id === messageId)
+  if (!message?.quote) return
+  messagesByConversation.value = {
+    ...messagesByConversation.value,
+    [conversationId]: list!.map(m => (m.id === messageId ? { ...m, quote: { ...m.quote!, status } } : m)),
+  }
+  return message.quote
+}
+
+function handleAcceptQuote(messageId: string) {
+  const quote = setQuoteStatus(messageId, 'accepted')
+  if (quote && activeConversation.value) acceptQuote(activeConversation.value, { ...quote, status: 'accepted' })
+}
+
+function handleDeclineQuote(messageId: string) {
+  setQuoteStatus(messageId, 'declined')
 }
 
 useSeoMeta({
@@ -120,6 +169,9 @@ useSeoMeta({
         :messages="activeMessages"
         @send="handleSend"
         @delete="handleDelete"
+        @send-quote="handleSendQuote"
+        @accept-quote="handleAcceptQuote"
+        @decline-quote="handleDeclineQuote"
       />
     </div>
   </div>

@@ -5,7 +5,6 @@ import type {
   ConsumerKpis,
   Conversation,
   DashboardSummary,
-  EarningsSummary,
   KycState,
   NotificationItem,
   ProviderKpis,
@@ -13,7 +12,6 @@ import type {
   PurchaseRecord,
   SavedProvider,
   ServiceListing,
-  Transaction,
   UserRole,
 } from '#shared/types/dashboard'
 
@@ -35,8 +33,8 @@ const KYC_STATE: KycState = {
 
 const PROVIDER_KPIS: ProviderKpis = {
   activeGigs: 6,
-  earningsThisMonthUsd: 2140,
-  earningsChangePercent: 18,
+  jobsCompletedThisMonth: 14,
+  jobsCompletedChangePercent: 18,
   clientsServed: 47,
   repeatClients: 12,
   averageRating: 4.9,
@@ -46,7 +44,6 @@ const PROVIDER_KPIS: ProviderKpis = {
 const CONSUMER_KPIS: ConsumerKpis = {
   activeOrders: 2,
   ordersInProgress: 1,
-  totalSpentUsd: 865,
   totalOrders: 9,
   providersHired: 6,
   providersHiredTwice: 3,
@@ -80,13 +77,13 @@ const CLIENTS_SERVED: ClientServed[] = [
 ]
 
 const PURCHASES: PurchaseRecord[] = [
-  { id: 'pu-1', providerName: 'Marcus Tan', categoryId: 'plumber', date: '2026-09-17', amountUsd: 140, status: 'completed' },
-  { id: 'pu-2', providerName: 'Elena Cho', categoryId: 'electrician', date: '2026-09-16', amountUsd: 60, status: 'in_progress' },
-  { id: 'pu-3', providerName: 'Sana Khatri', categoryId: 'appliance-repair', date: '2026-09-08', amountUsd: 45, status: 'completed' },
-  { id: 'pu-4', providerName: 'Ravi Gupta', categoryId: 'carpenter', date: '2026-09-04', amountUsd: 80, status: 'completed' },
-  { id: 'pu-5', providerName: 'Nadia Brooks', categoryId: 'painter', date: '2026-08-29', amountUsd: 310, status: 'cancelled' },
-  { id: 'pu-6', providerName: 'Jae Lin', categoryId: 'ac-service', date: '2026-09-21', amountUsd: 35, status: 'in_progress' },
-  { id: 'pu-7', providerName: 'Owen Ward', categoryId: 'electrician', date: '2026-08-20', amountUsd: 50, status: 'completed' },
+  { id: 'pu-1', providerName: 'Marcus Tan', categoryId: 'plumber', date: '2026-09-17', status: 'completed' },
+  { id: 'pu-2', providerName: 'Elena Cho', categoryId: 'electrician', date: '2026-09-16', status: 'in_progress' },
+  { id: 'pu-3', providerName: 'Sana Khatri', categoryId: 'appliance-repair', date: '2026-09-08', status: 'completed' },
+  { id: 'pu-4', providerName: 'Ravi Gupta', categoryId: 'carpenter', date: '2026-09-04', status: 'completed' },
+  { id: 'pu-5', providerName: 'Nadia Brooks', categoryId: 'painter', date: '2026-08-29', status: 'cancelled' },
+  { id: 'pu-6', providerName: 'Jae Lin', categoryId: 'ac-service', date: '2026-09-21', status: 'in_progress' },
+  { id: 'pu-7', providerName: 'Owen Ward', categoryId: 'electrician', date: '2026-08-20', status: 'completed' },
 ]
 
 const PROVIDER_PROFILE: ProviderProfileDetail = {
@@ -95,8 +92,13 @@ const PROVIDER_PROFILE: ProviderProfileDetail = {
   bio: '8 years helping local families keep their homes and gardens spotless. Fully insured, bring my own eco-friendly supplies.',
   phone: '+1 (415) 555-0148',
   email: 'amara.chen@example.com',
+  photoUrl: null,
+  coverPhotoUrl: null,
+  recentWorkPhotoUrls: [],
   serviceArea: 'San Francisco Bay Area — 15 km radius',
-  categoryIds: ['cleaning', 'gardening'],
+  categoryId: 'cleaning',
+  skillIds: ['deep-clean', 'move-out-clean', 'landscaping', 'garden-upkeep'],
+  yearsExperience: 8,
   hourlyRateUsd: 45,
   minVisitFeeUsd: 30,
   responseTimeHours: 2,
@@ -219,30 +221,6 @@ const SERVICES: ServiceListing[] = [
   { id: 'sv-4', title: 'Move-out cleaning', categoryId: 'cleaning', description: 'End-of-lease deep clean, currently paused while booked out through next month.', durationLabel: 'full day', priceLabel: '$180 flat', bookingsCount: 6, rating: 4.7, status: 'paused' },
 ]
 
-const EARNINGS_SUMMARY: EarningsSummary = {
-  availableBalanceUsd: 860,
-  pendingClearanceUsd: 215,
-  pendingClearanceDays: 2,
-  paidOutThisMonthUsd: 1800,
-  lifetimeEarningsUsd: 18420,
-  monthlyHistory: [
-    { label: 'Apr', amountUsd: 1450 },
-    { label: 'May', amountUsd: 1900 },
-    { label: 'Jun', amountUsd: 1620 },
-    { label: 'Jul', amountUsd: 2240 },
-    { label: 'Aug', amountUsd: 1980 },
-    { label: 'Sep', amountUsd: 2140 },
-  ],
-  payoutMethod: { label: 'Bank ••••8842', sublabel: 'Payouts every Monday' },
-}
-
-const TRANSACTIONS: Transaction[] = [
-  { id: 'tx-1', description: 'House cleaning — Alicia Moreno', date: '2026-09-14', type: 'booking', amountUsd: 95 },
-  { id: 'tx-2', description: 'Weekly payout to bank ••••8842', date: '2026-09-09', type: 'payout', amountUsd: -620 },
-  { id: 'tx-3', description: 'Gardening & landscaping — Daniel Ruiz', date: '2026-09-12', type: 'booking', amountUsd: 120 },
-  { id: 'tx-4', description: 'Refund — cancelled move-out clean', date: '2026-09-05', type: 'refund', amountUsd: -180 },
-]
-
 const SAVED_PROVIDERS: SavedProvider[] = [
   { id: 'marcus', name: 'Marcus Tan', categoryId: 'plumber', rating: 4.9, reviewCount: 84, hourlyRateUsd: 55, lastBookedLabel: 'Booked Sep 17', verified: true },
   { id: 'elena', name: 'Elena Cho', categoryId: 'electrician', rating: 5.0, reviewCount: 41, hourlyRateUsd: 40, lastBookedLabel: 'Booked Sep 16', verified: true },
@@ -260,14 +238,9 @@ const ACCOUNT_SETTINGS: AccountSettings = {
   passwordChangedLabel: '4 months ago',
   notificationPreferences: {
     bookingRequests: true,
-    paymentsPayouts: true,
     messages: true,
     marketing: false,
   },
-  paymentMethods: [
-    { id: 'pm-1', brand: 'visa', last4: '4471', expiry: '08/28', isDefault: true },
-    { id: 'pm-2', brand: 'mastercard', last4: '2210', expiry: '02/27', isDefault: false },
-  ],
   language: 'en',
 }
 
@@ -303,14 +276,6 @@ export function getNotifications(): NotificationItem[] {
 
 export function getServiceListings(): ServiceListing[] {
   return SERVICES
-}
-
-export function getEarningsSummary(): EarningsSummary {
-  return EARNINGS_SUMMARY
-}
-
-export function getTransactions(): Transaction[] {
-  return TRANSACTIONS
 }
 
 export function getSavedProviders(): SavedProvider[] {

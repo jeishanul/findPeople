@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ClientServed } from '#shared/types/dashboard'
+import type { ClientServed, Conversation } from '#shared/types/dashboard'
 
 // Auto-imported as <DashboardClientsTable/>. Used both on the dashboard
 // overview (a 3-row preview) and the full clients-served page.
@@ -12,6 +12,7 @@ const props = withDefaults(
 )
 
 const { t } = useI18n()
+const localePath = useLocalePath()
 
 const rows = computed(() => (props.limit ? props.clients.slice(0, props.limit) : props.clients))
 
@@ -23,6 +24,19 @@ const AVATAR_TINTS = [
 
 function avatarClass(index: number) {
   return AVATAR_TINTS[index % AVATAR_TINTS.length]
+}
+
+// Opens (or creates) a thread with this client — see `useConversations`.
+const { data: conversations } = useApi<Conversation[]>('/dashboard/conversations', {
+  key: 'dashboard-conversations',
+  lazy: true,
+  default: () => [],
+})
+const { ensureConversationForCounterpart } = useConversations()
+
+function messageClient(client: ClientServed) {
+  const conversationId = ensureConversationForCounterpart(client.clientName, client.categoryId, 'client', conversations.value ?? [])
+  navigateTo(localePath({ path: '/messages', query: { conversation: conversationId } }))
 }
 </script>
 
@@ -109,6 +123,7 @@ function avatarClass(index: number) {
             <UiButton
               variant="ghost"
               size="sm"
+              @click="messageClient(client)"
             >
               {{ t('dashboard.table.message') }}
             </UiButton>

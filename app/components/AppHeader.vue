@@ -21,14 +21,18 @@ const { data: categories } = await useApi<ServiceCategory[]>('/categories', { la
 
 const authModal = useAuthModal()
 const session = useSession()
+const { unreadMessages, unreadNotifications } = useUnreadCounts()
+const firstName = computed(() => session.name.value.split(' ')[0] ?? '')
 
 const localePath = useLocalePath()
-function handleDockedSearch({ category, location }: { category: string, location: string }) {
+function handleDockedSearch({ category, province, city, barangay }: { category: string, province: string, city: string, barangay: string }) {
   navigateTo(localePath({
     path: '/browse',
     query: {
-      ...(category ? { category } : {}),
-      ...(location ? { location } : {}),
+      ...(category ? { categories: category } : {}),
+      ...(province ? { province } : {}),
+      ...(city ? { city } : {}),
+      ...(barangay ? { barangay } : {}),
     },
   }))
 }
@@ -83,8 +87,36 @@ function handleDockedSearch({ category, location }: { category: string, location
         <UiThemeToggle />
         <div
           v-if="session.isAuthenticated.value"
-          class="flex items-center gap-2.5"
+          class="flex items-center gap-1.5"
         >
+          <NuxtLinkLocale
+            to="/messages"
+            class="relative flex h-9 w-9 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10"
+            :aria-label="t('nav.messages')"
+          >
+            <UiIcon
+              name="message"
+              :size="18"
+            />
+            <span
+              v-if="unreadMessages > 0"
+              class="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent-600 px-1 text-[10px] font-bold text-white"
+            >{{ formatBadgeCount(unreadMessages) }}</span>
+          </NuxtLinkLocale>
+          <NuxtLinkLocale
+            to="/notifications"
+            class="relative flex h-9 w-9 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10"
+            :aria-label="t('nav.notifications')"
+          >
+            <UiIcon
+              name="bell"
+              :size="18"
+            />
+            <span
+              v-if="unreadNotifications > 0"
+              class="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent-600 px-1 text-[10px] font-bold text-white"
+            >{{ formatBadgeCount(unreadNotifications) }}</span>
+          </NuxtLinkLocale>
           <NuxtLinkLocale
             to="/dashboard"
             class="flex items-center gap-2 rounded-full py-1 pr-3.5 pl-1 text-sm font-semibold hover:bg-black/5 dark:hover:bg-white/10"
@@ -92,7 +124,7 @@ function handleDockedSearch({ category, location }: { category: string, location
             <span class="flex h-8 w-8 items-center justify-center rounded-full bg-brand-600 font-display text-xs font-bold text-white">
               {{ session.initials.value }}
             </span>
-            {{ t('nav.dashboard') }}
+            {{ firstName }}
           </NuxtLinkLocale>
         </div>
         <div

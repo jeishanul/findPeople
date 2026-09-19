@@ -13,11 +13,16 @@ const { data: clients } = await useApi<ClientServed[]>('/dashboard/clients', {
   default: () => [],
 })
 
+// Includes clients gained this session by accepting an in-chat quote — see
+// `useBookings`.
+const { clientsServedOverlay } = useBookings()
+const allClients = computed(() => [...(clients.value ?? []), ...clientsServedOverlay.value])
+
 const filter = ref<string>('all')
 const search = ref('')
 
 const filterOptions = computed(() => {
-  const list = clients.value ?? []
+  const list = allClients.value
   const countFor = (status: BookingStatus | 'all') =>
     status === 'all' ? list.length : list.filter(client => client.status === status).length
 
@@ -31,13 +36,13 @@ const filterOptions = computed(() => {
 
 const filteredClients = computed(() => {
   const query = search.value.trim().toLowerCase()
-  return (clients.value ?? [])
+  return allClients.value
     .filter(client => filter.value === 'all' || client.status === filter.value)
     .filter(client => !query || client.clientName.toLowerCase().includes(query))
 })
 
-const totalEarned = computed(() => (clients.value ?? []).reduce((sum, client) => sum + client.amountUsd, 0))
-const repeatCount = computed(() => (clients.value ?? []).filter(client => client.repeatClient).length)
+const totalEarned = computed(() => allClients.value.reduce((sum, client) => sum + client.amountUsd, 0))
+const repeatCount = computed(() => allClients.value.filter(client => client.repeatClient).length)
 
 useSeoMeta({
   title: t('dashboard.clients.title'),
@@ -58,7 +63,7 @@ useSeoMeta({
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
       <DashboardStatCard
         :label="t('dashboard.clients.summary.total')"
-        :value="String((clients ?? []).length)"
+        :value="String(allClients.length)"
       />
       <DashboardStatCard
         :label="t('dashboard.clients.summary.repeat')"

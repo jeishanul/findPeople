@@ -1,15 +1,25 @@
 <script setup lang="ts">
 import type { PagedResult, ProviderProfile, ServiceCategory } from '#shared/types/marketplace'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const route = useRoute()
 const localePath = useLocalePath()
 
 const { data: categories } = await useApi<ServiceCategory[]>('/categories')
 
+function parseCategoryIds(value: unknown): string[] {
+  return typeof value === 'string' && value ? value.split(',').filter(Boolean) : []
+}
+
+// The top search bar (service + location) was removed from this page — it
+// duplicated the landing page's hero search and, per the request, filtering
+// happens through the sidebar only now. Service selection here is
+// multi-select (see `MarketplaceProviderFilterSidebar`).
 const filters = reactive({
-  category: typeof route.query.category === 'string' ? route.query.category : '',
-  location: typeof route.query.location === 'string' ? route.query.location : '',
+  categories: parseCategoryIds(route.query.categories),
+  province: typeof route.query.province === 'string' ? route.query.province : null as string | null,
+  city: typeof route.query.city === 'string' ? route.query.city : null as string | null,
+  barangay: typeof route.query.barangay === 'string' ? route.query.barangay : null as string | null,
   minRating: route.query.minRating ? Number(route.query.minRating) : 0,
   verifiedOnly: route.query.verifiedOnly === 'true',
   minPrice: route.query.minPrice ? Number(route.query.minPrice) : PRICE_MIN,
@@ -17,12 +27,15 @@ const filters = reactive({
   page: route.query.page ? Number(route.query.page) : 1,
 })
 
-const activeCategory = computed<ServiceCategory | null>(
-  () => categories.value?.find(category => category.id === filters.category) ?? null,
+const activeCategories = computed<ServiceCategory[]>(
+  () => (categories.value ?? []).filter(category => filters.categories.includes(category.id)),
 )
 
 const providerQuery = computed(() => ({
-  category: filters.category || undefined,
+  categories: filters.categories.length > 0 ? filters.categories : undefined,
+  province: filters.province ?? undefined,
+  city: filters.city ?? undefined,
+  barangay: filters.barangay ?? undefined,
   minRating: filters.minRating || undefined,
   verifiedOnly: filters.verifiedOnly || undefined,
   minRate: filters.minPrice > PRICE_MIN ? filters.minPrice : undefined,
@@ -36,12 +49,33 @@ const { data: providersPage } = await useApi<PagedResult<ProviderProfile>>('/pro
   key: 'browse-providers',
 })
 
+// Resolved just for the page title's "near {location}" text — the filter
+// sidebar's own <UiLocationPicker> resolves names internally for its own
+// display, this is a separate lookup for this page-level string.
+const { data: allProvinces } = await useApi<{ code: string, name: string }[]>('/locations/provinces', {
+  key: 'ph-provinces',
+  default: () => [],
+})
+const { data: citiesInProvince } = useApi<{ code: string, name: string }[]>('/locations/cities', {
+  key: 'ph-cities-browse-title',
+  query: computed(() => ({ province: filters.province ?? undefined })),
+  default: () => [],
+})
+const locationTitle = computed(() => {
+  if (filters.barangay) return filters.barangay
+  if (filters.city) return citiesInProvince.value?.find(c => c.code === filters.city)?.name ?? t('marketplace.browse.anywhere')
+  if (filters.province) return allProvinces.value?.find(p => p.code === filters.province)?.name ?? t('marketplace.browse.anywhere')
+  return t('marketplace.browse.anywhere')
+})
+
 function syncUrl() {
   navigateTo(localePath({
     path: '/browse',
     query: {
-      ...(filters.category ? { category: filters.category } : {}),
-      ...(filters.location ? { location: filters.location } : {}),
+      ...(filters.categories.length > 0 ? { categories: filters.categories.join(',') } : {}),
+      ...(filters.province ? { province: filters.province } : {}),
+      ...(filters.city ? { city: filters.city } : {}),
+      ...(filters.barangay ? { barangay: filters.barangay } : {}),
       ...(filters.minRating ? { minRating: String(filters.minRating) } : {}),
       ...(filters.verifiedOnly ? { verifiedOnly: 'true' } : {}),
       ...(filters.minPrice > PRICE_MIN ? { minPrice: String(filters.minPrice) } : {}),
@@ -56,8 +90,7 @@ function applyFilters() {
   syncUrl()
 }
 
-function clearCategory() {
-  filters.category = ''
+function handleReset() {
   filters.page = 1
   syncUrl()
 }
@@ -67,24 +100,17 @@ function goToPage(page: number) {
   syncUrl()
 }
 
-const heroSearchCategory = ref(filters.category)
-const heroSearchLocation = ref(filters.location)
-function handleTopSearch() {
-  filters.category = heroSearchCategory.value
-  filters.location = heroSearchLocation.value
-  filters.page = 1
-  syncUrl()
-}
+const categoryLabelList = computed(() => activeCategories.value.map(category => t(`marketplace.categories.${category.id}.label`)))
 
-const pageTitle = computed(() => activeCategory.value
+const pageTitle = computed(() => categoryLabelList.value.length > 0
   ? t('marketplace.browse.titleWithCategory', {
       count: providersPage.value?.total ?? 0,
-      category: t(`marketplace.categories.${activeCategory.value.id}.label`),
-      location: filters.location || t('marketplace.browse.anywhere'),
+      category: new Intl.ListFormat(locale.value, { type: 'conjunction' }).format(categoryLabelList.value),
+      location: locationTitle.value,
     })
   : t('marketplace.browse.titleAll', {
       count: providersPage.value?.total ?? 0,
-      location: filters.location || t('marketplace.browse.anywhere'),
+      location: locationTitle.value,
     }))
 
 useSeoMeta({
@@ -100,17 +126,6 @@ useSchemaOrg([defineWebPage()])
 
 <template>
   <div class="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-10">
-    <div class="mb-7">
-      <MarketplaceServiceSearchBar
-        v-model:category="heroSearchCategory"
-        v-model:location="heroSearchLocation"
-        variant="compact"
-        :categories="categories ?? []"
-        class="max-w-2xl"
-        @submit="handleTopSearch"
-      />
-    </div>
-
     <h1 class="font-display text-2xl font-bold sm:text-3xl">
       {{ pageTitle }}
     </h1>
@@ -122,15 +137,18 @@ useSchemaOrg([defineWebPage()])
            the way down a tall results list instead of stopping early. -->
       <div>
         <MarketplaceProviderFilterSidebar
-          v-model:location="filters.location"
+          v-model:category-ids="filters.categories"
+          v-model:province="filters.province"
+          v-model:city="filters.city"
+          v-model:barangay="filters.barangay"
           v-model:min-rating="filters.minRating"
           v-model:verified-only="filters.verifiedOnly"
           v-model:min-price="filters.minPrice"
           v-model:max-price="filters.maxPrice"
-          :category="activeCategory"
+          :categories="categories ?? []"
           class="sticky top-28"
           @apply="applyFilters"
-          @clear-category="clearCategory"
+          @reset="handleReset"
         />
       </div>
 

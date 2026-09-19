@@ -1,14 +1,20 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { useSession } from './useSession'
 
 describe('useSession', () => {
-  it('starts logged out, on the provider role, with no name', () => {
+  // `activeRole` persists via `useLocalStorage`, not `useState` — reset it
+  // between tests so one test's `setActiveRole()` can't leak into the next.
+  beforeEach(() => {
+    localStorage.clear()
+  })
+
+  it('starts logged out, on the consumer role, with no name', () => {
     const session = useSession()
 
     expect(session.isAuthenticated.value).toBe(false)
     expect(session.name.value).toBe('')
     expect(session.initials.value).toBe('')
-    expect(session.activeRole.value).toBe('provider')
+    expect(session.activeRole.value).toBe('consumer')
   })
 
   it('login() authenticates and derives initials from the name', () => {
@@ -33,9 +39,9 @@ describe('useSession', () => {
     const session = useSession()
 
     session.login('Amara Chen')
-    session.setActiveRole('consumer')
+    session.setActiveRole('provider')
 
-    expect(session.activeRole.value).toBe('consumer')
+    expect(session.activeRole.value).toBe('provider')
     expect(session.isAuthenticated.value).toBe(true)
   })
 
@@ -43,11 +49,22 @@ describe('useSession', () => {
     const session = useSession()
 
     session.login('Amara Chen')
-    session.setActiveRole('consumer')
+    session.setActiveRole('provider')
     session.logout()
 
     expect(session.isAuthenticated.value).toBe(false)
-    expect(session.activeRole.value).toBe('consumer')
+    expect(session.activeRole.value).toBe('provider')
+  })
+
+  it('persists the active role across separate useSession() calls (survives a reload)', async () => {
+    const a = useSession()
+    a.setActiveRole('provider')
+    // `useLocalStorage` flushes its write on the next tick, same as a real
+    // reload always has a task-queue boundary before the page re-reads it.
+    await nextTick()
+
+    const b = useSession()
+    expect(b.activeRole.value).toBe('provider')
   })
 
   it('shares state across separate calls (single source of truth)', () => {

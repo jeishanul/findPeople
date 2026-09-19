@@ -56,7 +56,7 @@ const linkButtonClass = 'inline-flex items-center justify-center gap-2 rounded-f
           <UiIcon
             name="map-pin"
             :size="13"
-          />{{ t('marketplace.provider.distanceAway', { distance: provider.distanceKm }) }}
+          />{{ provider.cityName }}
         </span>
       </div>
       <div class="mt-3 flex flex-wrap gap-2">
@@ -70,7 +70,7 @@ const linkButtonClass = 'inline-flex items-center justify-center gap-2 rounded-f
     </div>
     <div class="flex shrink-0 flex-col items-start gap-3 sm:items-end">
       <p class="font-display text-xl font-bold">
-        ${{ provider.ratePerHour }}<span class="text-sm font-medium text-black/50 dark:text-white/50">{{ t('marketplace.provider.perHour') }}</span>
+        {{ t('marketplace.provider.estimate', { rate: provider.ratePerHour }) }}
       </p>
       <div class="flex gap-2">
         <UiButton
@@ -132,12 +132,12 @@ const linkButtonClass = 'inline-flex items-center justify-center gap-2 rounded-f
     </div>
 
     <div class="flex items-center justify-between border-t border-black/10 pt-3.5 text-sm text-black/50 dark:border-white/10 dark:text-white/50">
-      <span>{{ t('marketplace.provider.fromRate', { rate: provider.ratePerHour }) }}</span>
+      <span>{{ t('marketplace.provider.fromEstimate', { rate: provider.ratePerHour }) }}</span>
       <span class="inline-flex items-center gap-1">
         <UiIcon
           name="map-pin"
           :size="13"
-        />{{ t('marketplace.provider.distanceAway', { distance: provider.distanceKm }) }}
+        />{{ provider.cityName }}
       </span>
     </div>
 

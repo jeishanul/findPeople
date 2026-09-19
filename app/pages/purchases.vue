@@ -13,10 +13,15 @@ const { data: purchases } = await useApi<PurchaseRecord[]>('/dashboard/purchases
   default: () => [],
 })
 
+// Includes bookings created this session by accepting an in-chat quote —
+// see `useBookings`.
+const { purchasesOverlay } = useBookings()
+const allPurchases = computed(() => [...(purchases.value ?? []), ...purchasesOverlay.value])
+
 const filter = ref<string>('all')
 
 const filterOptions = computed(() => {
-  const list = purchases.value ?? []
+  const list = allPurchases.value
   const countFor = (status: BookingStatus | 'all') =>
     status === 'all' ? list.length : list.filter(purchase => purchase.status === status).length
 
@@ -29,12 +34,12 @@ const filterOptions = computed(() => {
 })
 
 const filteredPurchases = computed(() =>
-  (purchases.value ?? []).filter(purchase => filter.value === 'all' || purchase.status === filter.value),
+  allPurchases.value.filter(purchase => filter.value === 'all' || purchase.status === filter.value),
 )
 
-const totalSpent = computed(() => (purchases.value ?? []).reduce((sum, purchase) => sum + purchase.amountUsd, 0))
-const providersHiredCount = computed(() => new Set((purchases.value ?? []).map(purchase => purchase.providerName)).size)
-const activeOrdersCount = computed(() => (purchases.value ?? []).filter(purchase => purchase.status === 'in_progress').length)
+const totalJobsCount = computed(() => allPurchases.value.length)
+const providersHiredCount = computed(() => new Set(allPurchases.value.map(purchase => purchase.providerName)).size)
+const activeOrdersCount = computed(() => allPurchases.value.filter(purchase => purchase.status === 'in_progress').length)
 
 useSeoMeta({
   title: t('dashboard.purchases.title'),
@@ -90,8 +95,8 @@ useSeoMeta({
 
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
       <DashboardStatCard
-        :label="t('dashboard.purchases.summary.totalSpent')"
-        :value="`$${totalSpent.toLocaleString()}`"
+        :label="t('dashboard.purchases.summary.totalJobs')"
+        :value="String(totalJobsCount)"
       />
       <DashboardStatCard
         :label="t('dashboard.purchases.summary.providersHired')"

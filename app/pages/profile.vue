@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { DashboardSummary, ProviderProfileDetail } from '#shared/types/dashboard'
+import type { ServiceCategory } from '#shared/types/marketplace'
 
 definePageMeta({
   layout: 'dashboard',
@@ -14,6 +15,10 @@ const { data: profile } = await useApi<ProviderProfileDetail>('/dashboard/profil
 const { data: summary } = await useApi<DashboardSummary>('/dashboard/summary', {
   key: 'dashboard-summary-provider',
   query: { role: 'provider' },
+})
+const { data: categories } = await useApi<ServiceCategory[]>('/categories', {
+  key: 'categories',
+  default: () => [],
 })
 
 // The active tab lives in the URL (`?tab=kyc`), not local state, so the
@@ -34,15 +39,27 @@ function setTab(tab: 'details' | 'kyc') {
 // Editable copy of the fetched profile — there's no save endpoint yet (see
 // CLAUDE.md / MarketplaceAuthModal for the same "UI-only" pattern), so
 // "Save changes" just re-syncs this local copy and "Cancel" discards edits.
+// Every field the public provider page (`providers/[id].vue`) shows is
+// editable here except the ones that are actually system-computed from real
+// activity (rating, review count, jobs/clients served, the reviews
+// themselves) — those stay read-only in the summary card below.
 const form = reactive({
   fullName: '',
   headline: '',
   bio: '',
   phone: '',
+  email: '',
   serviceArea: '',
+  categoryId: null as string | null,
+  yearsExperience: 0,
   hourlyRateUsd: 0,
   minVisitFeeUsd: 0,
 })
+
+const photoUrl = ref<string | null>(null)
+const coverPhotoUrl = ref<string | null>(null)
+const skillIds = ref<string[]>([])
+const recentWorkPhotoUrls = ref<string[]>([])
 
 function syncFormFromProfile() {
   if (!profile.value) return
@@ -50,12 +67,47 @@ function syncFormFromProfile() {
   form.headline = profile.value.headline
   form.bio = profile.value.bio
   form.phone = profile.value.phone
+  form.email = profile.value.email
   form.serviceArea = profile.value.serviceArea
+  form.categoryId = profile.value.categoryId
+  form.yearsExperience = profile.value.yearsExperience
   form.hourlyRateUsd = profile.value.hourlyRateUsd
   form.minVisitFeeUsd = profile.value.minVisitFeeUsd
+  photoUrl.value = profile.value.photoUrl
+  coverPhotoUrl.value = profile.value.coverPhotoUrl
+  skillIds.value = [...profile.value.skillIds]
+  recentWorkPhotoUrls.value = [...profile.value.recentWorkPhotoUrls]
 }
 
 watch(profile, syncFormFromProfile, { immediate: true })
+
+const categoryOptions = computed(() =>
+  (categories.value ?? []).map(category => ({ value: category.id, label: t(`marketplace.categories.${category.id}.label`) })),
+)
+
+const ALL_SKILL_IDS = [
+  'wiring', 'fault-fixing', 'panel-upgrades', 'deep-clean', 'move-out-clean', 'leak-repair',
+  'fittings', 'interior-painting', 'texture-finish', 'furniture-repair', 'custom-fittings',
+  'ac-servicing', 'ac-installation', 'fridge-repair', 'washer-repair', 'landscaping', 'garden-upkeep',
+] as const
+
+const skillOptions = computed(() =>
+  ALL_SKILL_IDS
+    .filter(id => !skillIds.value.includes(id))
+    .map(id => ({ value: id, label: t(`marketplace.skills.${id}`) })),
+)
+
+const skillToAdd = ref<string | null>(null)
+
+function addSkill() {
+  if (!skillToAdd.value) return
+  skillIds.value = [...skillIds.value, skillToAdd.value]
+  skillToAdd.value = null
+}
+
+function removeSkill(id: string) {
+  skillIds.value = skillIds.value.filter(skillId => skillId !== id)
+}
 
 const ALL_DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const
 const availableDays = ref<string[]>([])
@@ -69,10 +121,51 @@ function toggleDay(day: string) {
     : [...availableDays.value, day]
 }
 
+const availabilityPreview = computed(() => {
+  const days = formatAvailabilityDays(availableDays.value, day => t(`dashboard.days.${day}`), t('marketplace.providerProfile.everyDay'))
+  return days ? t('marketplace.providerProfile.availabilityFormatted', { days }) : t('marketplace.providerProfile.availabilityUnavailable')
+})
+
+// --- Client-side (mock) photo picking — no upload backend yet (CLAUDE.md) --
+
+const avatarInput = useTemplateRef('avatarInput')
+const coverInput = useTemplateRef('coverInput')
+const recentWorkInput = useTemplateRef('recentWorkInput')
+
+function onAvatarChange(event: Event) {
+  const file = (event.target as HTMLInputElement).files?.[0]
+  if (file) photoUrl.value = URL.createObjectURL(file)
+}
+
+function onCoverChange(event: Event) {
+  const file = (event.target as HTMLInputElement).files?.[0]
+  if (file) coverPhotoUrl.value = URL.createObjectURL(file)
+}
+
+function onRecentWorkChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (file && recentWorkPhotoUrls.value.length < 6) recentWorkPhotoUrls.value = [...recentWorkPhotoUrls.value, URL.createObjectURL(file)]
+  input.value = ''
+}
+
+function removeRecentWork(index: number) {
+  recentWorkPhotoUrls.value = recentWorkPhotoUrls.value.filter((_, i) => i !== index)
+}
+
 const memberSinceLabel = computed(() => {
   if (!profile.value) return ''
   return new Intl.DateTimeFormat(locale.value, { month: 'long', year: 'numeric' }).format(new Date(profile.value.memberSince))
 })
+
+// No save endpoint yet — "Save changes" just confirms the (already-live)
+// local edits with a brief inline confirmation instead of silently doing
+// nothing (a real gap this fixes — see the panel-improvements plan).
+const justSaved = ref(false)
+function handleSave() {
+  justSaved.value = true
+  setTimeout(() => (justSaved.value = false), 2500)
+}
 
 useSeoMeta({
   title: t('dashboard.profile.title'),
@@ -111,217 +204,376 @@ useSeoMeta({
       </button>
     </div>
 
-    <div
-      v-if="activeTab === 'details' && profile"
-      class="grid grid-cols-1 gap-5 lg:grid-cols-[320px_1fr]"
-    >
-      <div class="flex flex-col items-center gap-3.5 rounded-2xl border border-black/10 p-6 text-center dark:border-white/10">
-        <span class="flex h-24 w-24 items-center justify-center rounded-full bg-brand-600 font-display text-3xl font-bold text-white">
-          {{ initialsFor(profile.fullName) }}
-        </span>
-        <UiButton variant="ghost">
-          <UiIcon
-            name="camera"
-            :size="15"
-          />{{ t('dashboard.profile.changePhoto') }}
-        </UiButton>
-        <div class="w-full space-y-2 border-t border-black/10 pt-3.5 text-left dark:border-white/10">
-          <div class="flex items-center gap-2 text-[13px] text-black/60 dark:text-white/60">
+    <template v-if="activeTab === 'details' && profile">
+      <div class="overflow-hidden rounded-2xl border border-black/10 dark:border-white/10">
+        <div
+          class="relative flex h-36 items-end justify-end bg-black/5 p-3 dark:bg-white/10"
+          :style="coverPhotoUrl ? { backgroundImage: `url(${coverPhotoUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}"
+        >
+          <UiButton
+            variant="secondary"
+            size="sm"
+            @click="coverInput?.click()"
+          >
             <UiIcon
-              name="star"
-              filled
-              :size="15"
-              class="text-accent-600"
-            />
-            {{ t('dashboard.profile.ratingSummary', { rating: profile.averageRating.toFixed(1), count: profile.reviewCount }) }}
-          </div>
-          <div class="flex items-center gap-2 text-[13px] text-black/60 dark:text-white/60">
-            <UiIcon
-              name="users"
-              :size="15"
-            />
-            {{ t('dashboard.profile.clientsServedSummary', { count: profile.clientsServed }) }}
-          </div>
-          <div class="flex items-center gap-2 text-[13px] text-black/60 dark:text-white/60">
-            <UiIcon
-              name="calendar"
-              :size="15"
-            />
-            {{ t('dashboard.profile.memberSince', { date: memberSinceLabel }) }}
-          </div>
+              name="camera"
+              :size="14"
+            />{{ coverPhotoUrl ? t('dashboard.profile.changeCoverPhoto') : t('dashboard.profile.addCoverPhoto') }}
+          </UiButton>
+          <input
+            ref="coverInput"
+            type="file"
+            accept="image/*"
+            class="hidden"
+            :aria-label="t('dashboard.profile.coverPhoto')"
+            @change="onCoverChange"
+          >
         </div>
       </div>
 
-      <div class="flex flex-col gap-5">
-        <div class="rounded-2xl border border-black/10 p-6 dark:border-white/10">
-          <h2 class="mb-4 font-display text-[15px] font-bold">
-            {{ t('dashboard.profile.sections.basicInfo') }}
-          </h2>
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label
-                for="profile-full-name"
-                class="mb-2 block text-xs font-bold"
-              >{{ t('dashboard.profile.fields.fullName') }}</label>
-              <UiInput
-                id="profile-full-name"
-                v-model="form.fullName"
+      <div class="grid grid-cols-1 gap-5 lg:grid-cols-[320px_1fr]">
+        <div class="flex flex-col items-center gap-3.5 rounded-2xl border border-black/10 p-6 text-center dark:border-white/10">
+          <img
+            v-if="photoUrl"
+            :src="photoUrl"
+            :alt="form.fullName"
+            class="h-24 w-24 rounded-full object-cover"
+          >
+          <span
+            v-else
+            class="flex h-24 w-24 items-center justify-center rounded-full bg-brand-600 font-display text-3xl font-bold text-white"
+          >
+            {{ initialsFor(profile.fullName) }}
+          </span>
+          <UiButton
+            variant="ghost"
+            @click="avatarInput?.click()"
+          >
+            <UiIcon
+              name="camera"
+              :size="15"
+            />{{ t('dashboard.profile.changePhoto') }}
+          </UiButton>
+          <input
+            ref="avatarInput"
+            type="file"
+            accept="image/*"
+            class="hidden"
+            :aria-label="t('dashboard.profile.changePhoto')"
+            @change="onAvatarChange"
+          >
+          <div class="w-full space-y-2 border-t border-black/10 pt-3.5 text-left dark:border-white/10">
+            <div class="flex items-center gap-2 text-[13px] text-black/60 dark:text-white/60">
+              <UiIcon
+                name="star"
+                filled
+                :size="15"
+                class="text-accent-600"
               />
+              {{ t('dashboard.profile.ratingSummary', { rating: profile.averageRating.toFixed(1), count: profile.reviewCount }) }}
             </div>
-            <div>
-              <label
-                for="profile-headline"
-                class="mb-2 block text-xs font-bold"
-              >{{ t('dashboard.profile.fields.headline') }}</label>
-              <UiInput
-                id="profile-headline"
-                v-model="form.headline"
+            <div class="flex items-center gap-2 text-[13px] text-black/60 dark:text-white/60">
+              <UiIcon
+                name="users"
+                :size="15"
               />
+              {{ t('dashboard.profile.clientsServedSummary', { count: profile.clientsServed }) }}
             </div>
-            <div class="sm:col-span-2">
-              <label
-                for="profile-bio"
-                class="mb-2 block text-xs font-bold"
-              >{{ t('dashboard.profile.fields.bio') }}</label>
-              <textarea
-                id="profile-bio"
-                v-model="form.bio"
-                rows="3"
-                class="w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm text-black outline-none focus:border-brand-500 dark:border-white/10 dark:bg-white/5 dark:text-white"
+            <div class="flex items-center gap-2 text-[13px] text-black/60 dark:text-white/60">
+              <UiIcon
+                name="calendar"
+                :size="15"
               />
-            </div>
-            <div>
-              <label
-                for="profile-phone"
-                class="mb-2 block text-xs font-bold"
-              >{{ t('dashboard.profile.fields.phone') }}</label>
-              <UiInput
-                id="profile-phone"
-                v-model="form.phone"
-                type="tel"
-              />
-            </div>
-            <div>
-              <label
-                for="profile-email"
-                class="mb-2 block text-xs font-bold"
-              >{{ t('dashboard.profile.fields.email') }}</label>
-              <UiInput
-                id="profile-email"
-                :model-value="profile.email"
-                type="email"
-                disabled
-                class="opacity-60"
-              />
-            </div>
-            <div class="sm:col-span-2">
-              <label
-                for="profile-service-area"
-                class="mb-2 block text-xs font-bold"
-              >{{ t('dashboard.profile.fields.serviceArea') }}</label>
-              <UiInput
-                id="profile-service-area"
-                v-model="form.serviceArea"
-                icon="map-pin"
-              />
+              {{ t('dashboard.profile.memberSince', { date: memberSinceLabel }) }}
             </div>
           </div>
         </div>
 
-        <div class="rounded-2xl border border-black/10 p-6 dark:border-white/10">
-          <h2 class="mb-4 font-display text-[15px] font-bold">
-            {{ t('dashboard.profile.sections.skills') }}
-          </h2>
-          <div class="flex flex-wrap items-center gap-2">
-            <UiTag
-              v-for="categoryId in profile.categoryIds"
-              :key="categoryId"
-              variant="primary"
+        <div class="flex flex-col gap-5">
+          <div class="rounded-2xl border border-black/10 p-6 dark:border-white/10">
+            <h2 class="mb-4 font-display text-[15px] font-bold">
+              {{ t('dashboard.profile.sections.basicInfo') }}
+            </h2>
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label
+                  for="profile-full-name"
+                  class="mb-2 block text-xs font-bold"
+                >{{ t('dashboard.profile.fields.fullName') }}</label>
+                <UiInput
+                  id="profile-full-name"
+                  v-model="form.fullName"
+                />
+              </div>
+              <div>
+                <label
+                  for="profile-headline"
+                  class="mb-2 block text-xs font-bold"
+                >{{ t('dashboard.profile.fields.headline') }}</label>
+                <UiInput
+                  id="profile-headline"
+                  v-model="form.headline"
+                />
+              </div>
+              <div class="sm:col-span-2">
+                <label
+                  for="profile-bio"
+                  class="mb-2 block text-xs font-bold"
+                >{{ t('dashboard.profile.fields.bio') }}</label>
+                <textarea
+                  id="profile-bio"
+                  v-model="form.bio"
+                  rows="3"
+                  class="w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm text-black outline-none focus:border-brand-500 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                />
+              </div>
+              <div>
+                <label
+                  for="profile-phone"
+                  class="mb-2 block text-xs font-bold"
+                >{{ t('dashboard.profile.fields.phone') }}</label>
+                <UiInput
+                  id="profile-phone"
+                  v-model="form.phone"
+                  type="tel"
+                />
+              </div>
+              <div>
+                <label
+                  for="profile-email"
+                  class="mb-2 block text-xs font-bold"
+                >{{ t('dashboard.profile.fields.email') }}</label>
+                <UiInput
+                  id="profile-email"
+                  v-model="form.email"
+                  type="email"
+                />
+              </div>
+              <div>
+                <label
+                  for="profile-years-experience"
+                  class="mb-2 block text-xs font-bold"
+                >{{ t('dashboard.profile.fields.yearsExperience') }}</label>
+                <UiInput
+                  id="profile-years-experience"
+                  :model-value="String(form.yearsExperience)"
+                  @update:model-value="(v) => (form.yearsExperience = Number(v.replace(/\D/g, '')) || 0)"
+                />
+              </div>
+              <div class="sm:col-span-2">
+                <label
+                  for="profile-service-area"
+                  class="mb-2 block text-xs font-bold"
+                >{{ t('dashboard.profile.fields.serviceArea') }}</label>
+                <UiInput
+                  id="profile-service-area"
+                  v-model="form.serviceArea"
+                  icon="map-pin"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-black/10 p-6 dark:border-white/10">
+            <h2 class="mb-4 font-display text-[15px] font-bold">
+              {{ t('dashboard.profile.sections.skills') }}
+            </h2>
+            <div class="mb-3">
+              <label
+                for="profile-category"
+                class="mb-2 block text-xs font-bold"
+              >{{ t('dashboard.profile.fields.primaryCategory') }}</label>
+              <UiSelectSearch
+                id="profile-category"
+                v-model="form.categoryId"
+                :options="categoryOptions"
+                :placeholder="t('dashboard.services.form.categoryPlaceholder')"
+                class="max-w-xs"
+              />
+            </div>
+            <span class="mb-2 block text-xs font-bold">{{ t('dashboard.profile.fields.skills') }}</span>
+            <div class="flex flex-wrap items-center gap-2">
+              <UiTag
+                v-for="skillId in skillIds"
+                :key="skillId"
+                variant="primary"
+              >
+                {{ t(`marketplace.skills.${skillId}`) }}
+                <button
+                  type="button"
+                  :aria-label="t('dashboard.profile.removeSkill')"
+                  @click="removeSkill(skillId)"
+                >
+                  <UiIcon
+                    name="x"
+                    :size="11"
+                  />
+                </button>
+              </UiTag>
+            </div>
+            <div class="mt-3 flex items-center gap-2">
+              <UiSelectSearch
+                v-model="skillToAdd"
+                :options="skillOptions"
+                :placeholder="t('dashboard.profile.addSkillPlaceholder')"
+                class="max-w-xs flex-1"
+              />
+              <UiButton
+                variant="ghost"
+                size="sm"
+                :disabled="!skillToAdd"
+                @click="addSkill"
+              >
+                <UiIcon
+                  name="plus"
+                  :size="13"
+                />{{ t('dashboard.profile.addSkill') }}
+              </UiButton>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-black/10 p-6 dark:border-white/10">
+            <h2 class="mb-4 font-display text-[15px] font-bold">
+              {{ t('dashboard.profile.sections.rateAvailability') }}
+            </h2>
+            <div class="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div>
+                <label
+                  for="profile-hourly-rate"
+                  class="mb-2 block text-xs font-bold"
+                >{{ t('dashboard.profile.fields.hourlyRate') }}</label>
+                <UiInput
+                  id="profile-hourly-rate"
+                  :model-value="`$${form.hourlyRateUsd}`"
+                  @update:model-value="(v) => (form.hourlyRateUsd = Number(v.replace(/\D/g, '')) || 0)"
+                />
+                <p class="mt-1.5 text-xs text-black/50 dark:text-white/50">
+                  {{ t('dashboard.profile.fields.hourlyRateHelp') }}
+                </p>
+              </div>
+              <div>
+                <label
+                  for="profile-min-visit-fee"
+                  class="mb-2 block text-xs font-bold"
+                >{{ t('dashboard.profile.fields.minVisitFee') }}</label>
+                <UiInput
+                  id="profile-min-visit-fee"
+                  :model-value="`$${form.minVisitFeeUsd}`"
+                  @update:model-value="(v) => (form.minVisitFeeUsd = Number(v.replace(/\D/g, '')) || 0)"
+                />
+              </div>
+              <div>
+                <label
+                  for="profile-response-time"
+                  class="mb-2 block text-xs font-bold"
+                >{{ t('dashboard.profile.fields.responseTime') }}</label>
+                <UiInput
+                  id="profile-response-time"
+                  :model-value="`${profile.responseTimeHours}h`"
+                  disabled
+                  class="opacity-60"
+                />
+              </div>
+            </div>
+            <span class="mb-2 block text-xs font-bold">{{ t('dashboard.profile.fields.availability') }}</span>
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-for="day in ALL_DAYS"
+                :key="day"
+                type="button"
+                class="rounded-full px-3.5 py-1.5 text-xs font-bold transition-colors"
+                :class="availableDays.includes(day)
+                  ? 'bg-brand-50 text-brand-700 dark:bg-brand-700/20 dark:text-brand-100'
+                  : 'bg-black/5 text-black/40 dark:bg-white/10 dark:text-white/40'"
+                @click="toggleDay(day)"
+              >
+                {{ t(`dashboard.days.${day}`) }}
+              </button>
+            </div>
+            <p class="mt-2.5 text-xs text-black/50 dark:text-white/50">
+              {{ t('dashboard.profile.fields.availabilityPreview', { text: availabilityPreview }) }}
+            </p>
+          </div>
+
+          <div class="rounded-2xl border border-black/10 p-6 dark:border-white/10">
+            <h2 class="mb-1 font-display text-[15px] font-bold">
+              {{ t('dashboard.profile.sections.recentWork') }}
+            </h2>
+            <p class="mb-4 text-xs text-black/50 dark:text-white/50">
+              {{ t('dashboard.profile.recentWorkHint') }}
+            </p>
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <div
+                v-for="(url, index) in recentWorkPhotoUrls"
+                :key="url"
+                class="group relative aspect-[4/3] overflow-hidden rounded-xl"
+              >
+                <img
+                  :src="url"
+                  :alt="t('dashboard.profile.sections.recentWork')"
+                  class="h-full w-full object-cover"
+                >
+                <button
+                  type="button"
+                  class="absolute top-1.5 right-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                  :aria-label="t('dashboard.profile.removePhoto')"
+                  @click="removeRecentWork(index)"
+                >
+                  <UiIcon
+                    name="x"
+                    :size="13"
+                  />
+                </button>
+              </div>
+              <button
+                v-if="recentWorkPhotoUrls.length < 6"
+                type="button"
+                class="flex aspect-[4/3] flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-black/20 text-black/40 transition-colors hover:border-brand-500 hover:text-brand-600 dark:border-white/20 dark:text-white/40"
+                @click="recentWorkInput?.click()"
+              >
+                <UiIcon
+                  name="plus"
+                  :size="18"
+                />
+                <span class="text-xs font-semibold">{{ t('dashboard.profile.addPhoto') }}</span>
+              </button>
+            </div>
+            <input
+              ref="recentWorkInput"
+              type="file"
+              accept="image/*"
+              class="hidden"
+              :aria-label="t('dashboard.profile.addPhoto')"
+              @change="onRecentWorkChange"
             >
-              {{ t(`marketplace.categories.${categoryId}.label`) }}
-            </UiTag>
-            <UiButton
-              variant="ghost"
-              size="sm"
+          </div>
+
+          <div class="flex items-center justify-end gap-2.5">
+            <span
+              v-if="justSaved"
+              class="mr-auto flex items-center gap-1.5 text-xs font-semibold text-brand-700 dark:text-brand-100"
             >
               <UiIcon
-                name="plus"
-                :size="13"
-              />{{ t('dashboard.profile.addSkill') }}
+                name="check"
+                :size="14"
+              />{{ t('dashboard.profile.saved') }}
+            </span>
+            <UiButton
+              variant="ghost"
+              @click="syncFormFromProfile"
+            >
+              {{ t('dashboard.profile.cancel') }}
+            </UiButton>
+            <UiButton
+              variant="primary"
+              @click="handleSave"
+            >
+              {{ t('dashboard.profile.save') }}
             </UiButton>
           </div>
         </div>
-
-        <div class="rounded-2xl border border-black/10 p-6 dark:border-white/10">
-          <h2 class="mb-4 font-display text-[15px] font-bold">
-            {{ t('dashboard.profile.sections.rateAvailability') }}
-          </h2>
-          <div class="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div>
-              <label
-                for="profile-hourly-rate"
-                class="mb-2 block text-xs font-bold"
-              >{{ t('dashboard.profile.fields.hourlyRate') }}</label>
-              <UiInput
-                id="profile-hourly-rate"
-                :model-value="`$${form.hourlyRateUsd}`"
-                @update:model-value="(v) => (form.hourlyRateUsd = Number(v.replace(/\D/g, '')) || 0)"
-              />
-            </div>
-            <div>
-              <label
-                for="profile-min-visit-fee"
-                class="mb-2 block text-xs font-bold"
-              >{{ t('dashboard.profile.fields.minVisitFee') }}</label>
-              <UiInput
-                id="profile-min-visit-fee"
-                :model-value="`$${form.minVisitFeeUsd}`"
-                @update:model-value="(v) => (form.minVisitFeeUsd = Number(v.replace(/\D/g, '')) || 0)"
-              />
-            </div>
-            <div>
-              <label
-                for="profile-response-time"
-                class="mb-2 block text-xs font-bold"
-              >{{ t('dashboard.profile.fields.responseTime') }}</label>
-              <UiInput
-                id="profile-response-time"
-                :model-value="`${profile.responseTimeHours}h`"
-                disabled
-                class="opacity-60"
-              />
-            </div>
-          </div>
-          <span class="mb-2 block text-xs font-bold">{{ t('dashboard.profile.fields.availability') }}</span>
-          <div class="flex flex-wrap gap-2">
-            <button
-              v-for="day in ALL_DAYS"
-              :key="day"
-              type="button"
-              class="rounded-full px-3.5 py-1.5 text-xs font-bold transition-colors"
-              :class="availableDays.includes(day)
-                ? 'bg-brand-50 text-brand-700 dark:bg-brand-700/20 dark:text-brand-100'
-                : 'bg-black/5 text-black/40 dark:bg-white/10 dark:text-white/40'"
-              @click="toggleDay(day)"
-            >
-              {{ t(`dashboard.days.${day}`) }}
-            </button>
-          </div>
-        </div>
-
-        <div class="flex justify-end gap-2.5">
-          <UiButton
-            variant="ghost"
-            @click="syncFormFromProfile"
-          >
-            {{ t('dashboard.profile.cancel') }}
-          </UiButton>
-          <UiButton variant="primary">
-            {{ t('dashboard.profile.save') }}
-          </UiButton>
-        </div>
       </div>
-    </div>
+    </template>
 
     <DashboardKycStepper
       v-else-if="activeTab === 'kyc' && summary"

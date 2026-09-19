@@ -7,6 +7,8 @@ definePageMeta({
 })
 
 const { t } = useI18n()
+const session = useSession()
+const localePath = useLocalePath()
 
 const { data: account } = await useApi<AccountSettings>('/dashboard/account', {
   key: 'dashboard-account',
@@ -14,7 +16,6 @@ const { data: account } = await useApi<AccountSettings>('/dashboard/account', {
 
 const twoFa = ref(false)
 const bookingRequests = ref(true)
-const paymentsPayouts = ref(true)
 const messages = ref(true)
 const marketing = ref(false)
 
@@ -22,10 +23,44 @@ watch(account, (value) => {
   if (!value) return
   twoFa.value = value.twoFactorEnabled
   bookingRequests.value = value.notificationPreferences.bookingRequests
-  paymentsPayouts.value = value.notificationPreferences.paymentsPayouts
   messages.value = value.notificationPreferences.messages
   marketing.value = value.notificationPreferences.marketing
 }, { immediate: true })
+
+// --- Change password — mock only, no backend (see CLAUDE.md) --------------
+
+const isPasswordModalOpen = ref(false)
+const newPassword = ref('')
+const confirmPassword = ref('')
+const passwordJustChanged = ref(false)
+
+const canChangePassword = computed(() => newPassword.value.length >= 8 && newPassword.value === confirmPassword.value)
+
+function openChangePassword() {
+  newPassword.value = ''
+  confirmPassword.value = ''
+  isPasswordModalOpen.value = true
+}
+
+function submitChangePassword() {
+  if (!canChangePassword.value) return
+  isPasswordModalOpen.value = false
+  passwordJustChanged.value = true
+  setTimeout(() => (passwordJustChanged.value = false), 2500)
+}
+
+// --- Deactivate / delete account — destructive, so both are gated behind a
+// confirmation dialog rather than firing on a single click. Neither backend
+// action exists (mock data only), so confirming just logs the mock session
+// out, which is the closest honest equivalent to "this account is gone".
+
+const dangerAction = ref<'deactivate' | 'delete' | null>(null)
+
+function confirmDangerAction() {
+  dangerAction.value = null
+  session.logout()
+  navigateTo(localePath('/'))
+}
 
 useSeoMeta({
   title: t('dashboard.settings.title'),
@@ -45,10 +80,21 @@ useSeoMeta({
 
     <template v-if="account">
       <section class="rounded-2xl border border-black/10 p-6 dark:border-white/10">
-        <h2 class="mb-1 font-display text-[15px] font-bold">
-          {{ t('dashboard.settings.account.heading') }}
-        </h2>
-        <div class="flex items-center justify-between gap-4 border-b border-black/10 py-3.5 dark:border-white/10">
+        <div class="mb-1 flex items-center justify-between gap-4">
+          <h2 class="font-display text-[15px] font-bold">
+            {{ t('dashboard.settings.account.heading') }}
+          </h2>
+          <NuxtLinkLocale
+            to="/profile"
+            :class="linkButtonClass('ghost', 'sm')"
+          >
+            {{ t('dashboard.settings.account.editProfile') }}
+          </NuxtLinkLocale>
+        </div>
+        <p class="mb-3.5 text-xs text-black/50 dark:text-white/50">
+          {{ t('dashboard.settings.account.editHint') }}
+        </p>
+        <div class="flex flex-col gap-3.5 py-1">
           <div>
             <div class="text-[13.5px] font-semibold">
               {{ t('dashboard.settings.account.fullName') }}
@@ -57,14 +103,6 @@ useSeoMeta({
               {{ account.fullName }}
             </div>
           </div>
-          <NuxtLinkLocale
-            to="/profile"
-            :class="linkButtonClass('ghost', 'sm')"
-          >
-            {{ t('dashboard.settings.account.editProfile') }}
-          </NuxtLinkLocale>
-        </div>
-        <div class="flex items-center justify-between gap-4 border-b border-black/10 py-3.5 dark:border-white/10">
           <div>
             <div class="text-[13.5px] font-semibold">
               {{ t('dashboard.settings.account.email') }}
@@ -73,14 +111,6 @@ useSeoMeta({
               {{ account.email }}
             </div>
           </div>
-          <UiButton
-            variant="ghost"
-            size="sm"
-          >
-            {{ t('dashboard.settings.account.change') }}
-          </UiButton>
-        </div>
-        <div class="flex items-center justify-between gap-4 py-3.5">
           <div>
             <div class="text-[13.5px] font-semibold">
               {{ t('dashboard.settings.account.phone') }}
@@ -89,12 +119,6 @@ useSeoMeta({
               {{ account.phone }}
             </div>
           </div>
-          <UiButton
-            variant="ghost"
-            size="sm"
-          >
-            {{ t('dashboard.settings.account.change') }}
-          </UiButton>
         </div>
       </section>
 
@@ -108,12 +132,24 @@ useSeoMeta({
               {{ t('dashboard.settings.security.password') }}
             </div>
             <div class="mt-0.5 text-[13px] text-black/60 dark:text-white/60">
-              {{ t('dashboard.settings.security.passwordChanged', { time: account.passwordChangedLabel }) }}
+              <span
+                v-if="passwordJustChanged"
+                class="inline-flex items-center gap-1 font-semibold text-brand-700 dark:text-brand-100"
+              >
+                <UiIcon
+                  name="check"
+                  :size="12"
+                />{{ t('dashboard.settings.security.passwordUpdated') }}
+              </span>
+              <template v-else>
+                {{ t('dashboard.settings.security.passwordChanged', { time: account.passwordChangedLabel }) }}
+              </template>
             </div>
           </div>
           <UiButton
             variant="ghost"
             size="sm"
+            @click="openChangePassword"
           >
             {{ t('dashboard.settings.security.changePassword') }}
           </UiButton>
@@ -149,15 +185,6 @@ useSeoMeta({
         </div>
         <div class="flex items-center justify-between gap-4 border-b border-black/10 py-3.5 dark:border-white/10">
           <div class="text-[13.5px] font-semibold">
-            {{ t('dashboard.settings.notifications.paymentsPayouts') }}
-          </div>
-          <UiToggleSwitch
-            v-model="paymentsPayouts"
-            :label="t('dashboard.settings.notifications.paymentsPayouts')"
-          />
-        </div>
-        <div class="flex items-center justify-between gap-4 border-b border-black/10 py-3.5 dark:border-white/10">
-          <div class="text-[13.5px] font-semibold">
             {{ t('dashboard.settings.notifications.messages') }}
           </div>
           <UiToggleSwitch
@@ -173,65 +200,6 @@ useSeoMeta({
             v-model="marketing"
             :label="t('dashboard.settings.notifications.marketing')"
           />
-        </div>
-      </section>
-
-      <section class="rounded-2xl border border-black/10 p-6 dark:border-white/10">
-        <div class="mb-1 flex items-center justify-between">
-          <h2 class="font-display text-[15px] font-bold">
-            {{ t('dashboard.settings.payment.heading') }}
-          </h2>
-          <UiButton
-            variant="ghost"
-            size="sm"
-          >
-            <UiIcon
-              name="plus"
-              :size="13"
-            />{{ t('dashboard.settings.payment.addMethod') }}
-          </UiButton>
-        </div>
-        <div
-          v-for="(method, index) in account.paymentMethods"
-          :key="method.id"
-          class="flex items-center justify-between gap-4 py-3.5"
-          :class="index < account.paymentMethods.length - 1 && 'border-b border-black/10 dark:border-white/10'"
-        >
-          <div class="flex items-center gap-3">
-            <span class="flex h-7 w-10 shrink-0 items-center justify-center rounded-md bg-brand-50 text-[10px] font-extrabold text-brand-700 dark:bg-brand-700/20 dark:text-brand-100">
-              {{ method.brand === 'visa' ? 'VISA' : 'MC' }}
-            </span>
-            <div>
-              <div class="text-[13.5px] font-semibold">
-                {{ method.brand === 'visa' ? 'Visa' : 'Mastercard' }} •••• {{ method.last4 }}
-              </div>
-              <div class="mt-0.5 text-xs text-black/60 dark:text-white/60">
-                {{ t('dashboard.settings.payment.expires', { date: method.expiry }) }}
-              </div>
-            </div>
-            <UiTag
-              v-if="method.isDefault"
-              variant="primary"
-              size="sm"
-            >
-              {{ t('dashboard.settings.payment.default') }}
-            </UiTag>
-          </div>
-          <div class="flex gap-2">
-            <UiButton
-              v-if="!method.isDefault"
-              variant="ghost"
-              size="sm"
-            >
-              {{ t('dashboard.settings.payment.makeDefault') }}
-            </UiButton>
-            <UiButton
-              variant="ghost"
-              size="sm"
-            >
-              {{ t('dashboard.settings.payment.remove') }}
-            </UiButton>
-          </div>
         </div>
       </section>
 
@@ -268,6 +236,7 @@ useSeoMeta({
           <button
             type="button"
             class="rounded-md border border-red-600/40 px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-900/20"
+            @click="dangerAction = 'deactivate'"
           >
             {{ t('dashboard.settings.danger.deactivate') }}
           </button>
@@ -284,11 +253,90 @@ useSeoMeta({
           <button
             type="button"
             class="rounded-md border border-red-600/40 px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-900/20"
+            @click="dangerAction = 'delete'"
           >
             {{ t('dashboard.settings.danger.delete') }}
           </button>
         </div>
       </section>
     </template>
+
+    <UiModal
+      :open="isPasswordModalOpen"
+      @close="isPasswordModalOpen = false"
+    >
+      <h2 class="mb-5 font-display text-xl font-bold">
+        {{ t('dashboard.settings.security.changePassword') }}
+      </h2>
+      <form
+        class="flex flex-col gap-4"
+        @submit.prevent="submitChangePassword"
+      >
+        <div>
+          <label
+            for="settings-new-password"
+            class="mb-1.5 block text-xs font-bold"
+          >{{ t('dashboard.settings.security.newPasswordLabel') }}</label>
+          <UiInput
+            id="settings-new-password"
+            v-model="newPassword"
+            type="password"
+          />
+        </div>
+        <div>
+          <label
+            for="settings-confirm-password"
+            class="mb-1.5 block text-xs font-bold"
+          >{{ t('dashboard.settings.security.confirmPasswordLabel') }}</label>
+          <UiInput
+            id="settings-confirm-password"
+            v-model="confirmPassword"
+            type="password"
+          />
+        </div>
+        <div class="mt-1 flex justify-end gap-2.5">
+          <UiButton
+            type="button"
+            variant="ghost"
+            @click="isPasswordModalOpen = false"
+          >
+            {{ t('dashboard.services.form.cancel') }}
+          </UiButton>
+          <UiButton
+            type="submit"
+            variant="primary"
+            :disabled="!canChangePassword"
+          >
+            {{ t('dashboard.settings.security.updatePassword') }}
+          </UiButton>
+        </div>
+      </form>
+    </UiModal>
+
+    <UiModal
+      :open="dangerAction !== null"
+      @close="dangerAction = null"
+    >
+      <h2 class="mb-2 font-display text-xl font-bold">
+        {{ dangerAction === 'delete' ? t('dashboard.settings.danger.confirmDeleteTitle') : t('dashboard.settings.danger.confirmDeactivateTitle') }}
+      </h2>
+      <p class="mb-5 text-sm text-black/60 dark:text-white/60">
+        {{ dangerAction === 'delete' ? t('dashboard.settings.danger.confirmDeleteBody') : t('dashboard.settings.danger.confirmDeactivateBody') }}
+      </p>
+      <div class="flex justify-end gap-2.5">
+        <UiButton
+          variant="ghost"
+          @click="dangerAction = null"
+        >
+          {{ t('dashboard.services.form.cancel') }}
+        </UiButton>
+        <UiButton
+          class="bg-red-600! hover:bg-red-700!"
+          @click="confirmDangerAction"
+        >
+          {{ dangerAction === 'delete' ? t('dashboard.settings.danger.delete') : t('dashboard.settings.danger.deactivate') }}
+        </UiButton>
+      </div>
+    </UiModal>
   </div>
 </template>

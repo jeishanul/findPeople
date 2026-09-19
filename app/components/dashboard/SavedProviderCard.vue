@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import type { SavedProvider } from '#shared/types/dashboard'
+import type { Conversation, SavedProvider } from '#shared/types/dashboard'
 
 // Auto-imported as <DashboardSavedProviderCard/>. One card on the saved
-// providers page, with a working "unsave" (heart) action.
-defineProps<{
+// providers page, with a working "unsave" (heart) action and a "Message"
+// action that opens/creates a thread with this provider (see `useConversations`).
+const props = defineProps<{
   provider: SavedProvider
   tone: 'primary' | 'accent' | 'neutral'
 }>()
@@ -13,11 +14,24 @@ defineEmits<{
 }>()
 
 const { t } = useI18n()
+const localePath = useLocalePath()
 
 const TONE_CLASS: Record<'primary' | 'accent' | 'neutral', string> = {
   primary: 'bg-brand-50 text-brand-700 dark:bg-brand-700/20 dark:text-brand-100',
   accent: 'bg-accent-50 text-accent-700 dark:bg-accent-700/20 dark:text-accent-100',
   neutral: 'bg-black/5 text-black/60 dark:bg-white/10 dark:text-white/60',
+}
+
+const { data: conversations } = useApi<Conversation[]>('/dashboard/conversations', {
+  key: 'dashboard-conversations',
+  lazy: true,
+  default: () => [],
+})
+const { ensureConversationForCounterpart } = useConversations()
+
+function messageProvider() {
+  const conversationId = ensureConversationForCounterpart(props.provider.name, props.provider.categoryId, 'provider', conversations.value ?? [])
+  navigateTo(localePath({ path: '/messages', query: { conversation: conversationId } }))
 }
 </script>
 
@@ -75,12 +89,13 @@ const TONE_CLASS: Record<'primary' | 'accent' | 'neutral', string> = {
 
     <div class="flex items-center justify-between border-t border-black/10 pt-3 dark:border-white/10">
       <div class="text-[15px] font-bold">
-        ${{ provider.hourlyRateUsd }}<span class="text-xs font-semibold text-black/40 dark:text-white/40">/hr</span>
+        {{ t('marketplace.provider.estimate', { rate: provider.hourlyRateUsd }) }}
       </div>
       <div class="flex gap-2">
         <UiButton
           variant="ghost"
           size="sm"
+          @click="messageProvider"
         >
           {{ t('dashboard.savedProviders.message') }}
         </UiButton>

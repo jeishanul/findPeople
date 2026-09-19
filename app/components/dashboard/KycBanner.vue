@@ -4,14 +4,20 @@ import type { KycState } from '#shared/types/dashboard'
 // Auto-imported as <DashboardKycBanner/>. Compact KYC nudge on the dashboard
 // overview — the full step-by-step flow lives on the profile page
 // (<DashboardKycStepper/>), since verification is mandatory before a
-// provider can accept bookings or get paid out.
+// provider can accept bookings.
 const props = defineProps<{
   kyc: KycState
 }>()
 
 const { t } = useI18n()
+const kycSubmissions = useKycSubmissions()
 
-const completedCount = computed(() => props.kyc.steps.filter(step => step.status === 'verified').length)
+// Overlays any steps submitted this session in `DashboardKycStepper` on top
+// of the fetched state, so this banner stays consistent with the stepper
+// within the same session — see `useKycSubmissions`.
+const effectiveKyc = computed(() => kycSubmissions.applyOverlay(props.kyc))
+
+const completedCount = computed(() => effectiveKyc.value.steps.filter(step => step.status === 'verified').length)
 </script>
 
 <template>

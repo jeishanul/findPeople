@@ -34,7 +34,6 @@ interface ProviderSeed {
   rating: number
   reviewCount: number
   ratePerHour: number
-  distanceKm: number
   verified: boolean
   yearsExperience: number
   jobsCompleted: number
@@ -42,6 +41,12 @@ interface ProviderSeed {
   responseTimeHours: number
   minVisitFee: number
   serviceAreaKm: number
+  availableDays: string[]
+  provinceCode: string
+  provinceName: string
+  cityCode: string
+  cityName: string
+  barangay: string
   reviews: Array<{ reviewerName: string, rating: number, postedDaysAgo: number }>
 }
 
@@ -53,7 +58,6 @@ const PROVIDER_SEEDS: ProviderSeed[] = [
     rating: 4.9,
     reviewCount: 212,
     ratePerHour: 18,
-    distanceKm: 2.4,
     verified: true,
     yearsExperience: 8,
     jobsCompleted: 340,
@@ -61,6 +65,12 @@ const PROVIDER_SEEDS: ProviderSeed[] = [
     responseTimeHours: 1,
     minVisitFee: 40,
     serviceAreaKm: 6,
+    availableDays: ['mon', 'tue', 'wed', 'thu', 'fri'],
+    provinceCode: '1374',
+    provinceName: 'NCR, Second District',
+    cityCode: '137404',
+    cityName: 'Quezon City',
+    barangay: 'Aurora',
     reviews: [
       { reviewerName: 'Tanvir R.', rating: 5, postedDaysAgo: 14 },
       { reviewerName: 'Farzana H.', rating: 4, postedDaysAgo: 30 },
@@ -73,7 +83,6 @@ const PROVIDER_SEEDS: ProviderSeed[] = [
     rating: 5,
     reviewCount: 348,
     ratePerHour: 15,
-    distanceKm: 1.1,
     verified: true,
     yearsExperience: 5,
     jobsCompleted: 512,
@@ -81,6 +90,12 @@ const PROVIDER_SEEDS: ProviderSeed[] = [
     responseTimeHours: 1,
     minVisitFee: 25,
     serviceAreaKm: 5,
+    availableDays: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'],
+    provinceCode: '1376',
+    provinceName: 'NCR, Fourth District',
+    cityCode: '137602',
+    cityName: 'City of Makati',
+    barangay: 'Bel-Air',
     reviews: [
       { reviewerName: 'Nadia S.', rating: 5, postedDaysAgo: 5 },
       { reviewerName: 'Imran K.', rating: 5, postedDaysAgo: 21 },
@@ -93,7 +108,6 @@ const PROVIDER_SEEDS: ProviderSeed[] = [
     rating: 4.8,
     reviewCount: 156,
     ratePerHour: 20,
-    distanceKm: 3.6,
     verified: true,
     yearsExperience: 6,
     jobsCompleted: 260,
@@ -101,6 +115,12 @@ const PROVIDER_SEEDS: ProviderSeed[] = [
     responseTimeHours: 2,
     minVisitFee: 35,
     serviceAreaKm: 7,
+    availableDays: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
+    provinceCode: '1374',
+    provinceName: 'NCR, Second District',
+    cityCode: '137403',
+    cityName: 'City of Pasig',
+    barangay: 'Bagong Ilog',
     reviews: [
       { reviewerName: 'Shafiq M.', rating: 5, postedDaysAgo: 9 },
       { reviewerName: 'Tanvir R.', rating: 4, postedDaysAgo: 40 },
@@ -113,7 +133,6 @@ const PROVIDER_SEEDS: ProviderSeed[] = [
     rating: 4.9,
     reviewCount: 97,
     ratePerHour: 17,
-    distanceKm: 4.2,
     verified: true,
     yearsExperience: 4,
     jobsCompleted: 140,
@@ -121,6 +140,12 @@ const PROVIDER_SEEDS: ProviderSeed[] = [
     responseTimeHours: 3,
     minVisitFee: 30,
     serviceAreaKm: 8,
+    availableDays: ['tue', 'wed', 'thu', 'fri', 'sat'],
+    provinceCode: '1376',
+    provinceName: 'NCR, Fourth District',
+    cityCode: '137607',
+    cityName: 'Taguig City',
+    barangay: 'Central Bicutan',
     reviews: [
       { reviewerName: 'Nadia S.', rating: 5, postedDaysAgo: 18 },
     ],
@@ -132,7 +157,6 @@ const PROVIDER_SEEDS: ProviderSeed[] = [
     rating: 4.7,
     reviewCount: 124,
     ratePerHour: 19,
-    distanceKm: 2.9,
     verified: true,
     yearsExperience: 7,
     jobsCompleted: 205,
@@ -140,6 +164,12 @@ const PROVIDER_SEEDS: ProviderSeed[] = [
     responseTimeHours: 2,
     minVisitFee: 30,
     serviceAreaKm: 6,
+    availableDays: ['mon', 'wed', 'fri', 'sat'],
+    provinceCode: '1374',
+    provinceName: 'NCR, Second District',
+    cityCode: '137401',
+    cityName: 'City of Mandaluyong',
+    barangay: 'Addition Hills',
     reviews: [
       { reviewerName: 'Imran K.', rating: 4, postedDaysAgo: 12 },
     ],
@@ -151,7 +181,6 @@ const PROVIDER_SEEDS: ProviderSeed[] = [
     rating: 4.9,
     reviewCount: 201,
     ratePerHour: 22,
-    distanceKm: 1.8,
     verified: true,
     yearsExperience: 6,
     jobsCompleted: 330,
@@ -159,6 +188,12 @@ const PROVIDER_SEEDS: ProviderSeed[] = [
     responseTimeHours: 1,
     minVisitFee: 40,
     serviceAreaKm: 6,
+    availableDays: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'],
+    provinceCode: '1376',
+    provinceName: 'NCR, Fourth District',
+    cityCode: '137605',
+    cityName: 'Pasay City',
+    barangay: 'Barangay 105',
     reviews: [
       { reviewerName: 'Shafiq M.', rating: 5, postedDaysAgo: 3 },
     ],
@@ -170,7 +205,6 @@ const PROVIDER_SEEDS: ProviderSeed[] = [
     rating: 4.6,
     reviewCount: 58,
     ratePerHour: 16,
-    distanceKm: 3.1,
     verified: true,
     yearsExperience: 3,
     jobsCompleted: 90,
@@ -178,6 +212,12 @@ const PROVIDER_SEEDS: ProviderSeed[] = [
     responseTimeHours: 4,
     minVisitFee: 25,
     serviceAreaKm: 5,
+    availableDays: ['mon', 'tue', 'wed', 'thu', 'fri'],
+    provinceCode: '1376',
+    provinceName: 'NCR, Fourth District',
+    cityCode: '137603',
+    cityName: 'City of Muntinlupa',
+    barangay: 'Alabang',
     reviews: [
       { reviewerName: 'Farzana H.', rating: 4, postedDaysAgo: 25 },
     ],
@@ -189,7 +229,6 @@ const PROVIDER_SEEDS: ProviderSeed[] = [
     rating: 5,
     reviewCount: 77,
     ratePerHour: 14,
-    distanceKm: 2.2,
     verified: true,
     yearsExperience: 4,
     jobsCompleted: 120,
@@ -197,6 +236,12 @@ const PROVIDER_SEEDS: ProviderSeed[] = [
     responseTimeHours: 3,
     minVisitFee: 20,
     serviceAreaKm: 5,
+    availableDays: ['mon', 'tue', 'thu', 'fri', 'sat'],
+    provinceCode: '1374',
+    provinceName: 'NCR, Second District',
+    cityCode: '137402',
+    cityName: 'City of Marikina',
+    barangay: 'Concepcion Uno',
     reviews: [
       { reviewerName: 'Nadia S.', rating: 5, postedDaysAgo: 8 },
     ],
@@ -211,7 +256,6 @@ const PROVIDERS: ProviderProfile[] = PROVIDER_SEEDS.map(seed => ({
   rating: seed.rating,
   reviewCount: seed.reviewCount,
   ratePerHour: seed.ratePerHour,
-  distanceKm: seed.distanceKm,
   verified: seed.verified,
   yearsExperience: seed.yearsExperience,
   jobsCompleted: seed.jobsCompleted,
@@ -219,6 +263,12 @@ const PROVIDERS: ProviderProfile[] = PROVIDER_SEEDS.map(seed => ({
   responseTimeHours: seed.responseTimeHours,
   minVisitFee: seed.minVisitFee,
   serviceAreaKm: seed.serviceAreaKm,
+  availableDays: seed.availableDays,
+  provinceCode: seed.provinceCode,
+  provinceName: seed.provinceName,
+  cityCode: seed.cityCode,
+  cityName: seed.cityName,
+  barangay: seed.barangay,
   reviews: seed.reviews.map((review, index) => ({
     id: `${slugify(seed.name)}-review-${index + 1}`,
     ...review,
@@ -262,11 +312,17 @@ export function getProviders(query: ProviderQuery = {}): PagedResult<ProviderPro
   const perPage = query.perPage && query.perPage > 0 ? query.perPage : 8
 
   const filtered = PROVIDERS.filter((provider) => {
-    if (query.category && provider.categoryId !== query.category) return false
+    if (query.categories && query.categories.length > 0 && !query.categories.includes(provider.categoryId)) return false
     if (query.minRating && provider.rating < query.minRating) return false
     if (query.verifiedOnly && !provider.verified) return false
     if (query.minRate !== undefined && provider.ratePerHour < query.minRate) return false
     if (query.maxRate !== undefined && provider.ratePerHour > query.maxRate) return false
+    // Per the client spec doc: service-only matches nationwide; +province
+    // narrows to that province; +province+city narrows further. `barangay`
+    // narrows one level further still when given.
+    if (query.province && provider.provinceCode !== query.province) return false
+    if (query.city && provider.cityCode !== query.city) return false
+    if (query.barangay && provider.barangay !== query.barangay) return false
     return true
   })
 

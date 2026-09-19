@@ -3,34 +3,34 @@ import type { KycState, KycStepId, KycStepStatus } from '#shared/types/dashboard
 
 // Auto-imported as <DashboardKycStepper/>. The full 3-step identity
 // verification flow on the profile page — mandatory before a provider can
-// accept bookings or get paid out (see CLAUDE.md brief and
-// `dashboard/profile.vue`).
+// accept bookings (see CLAUDE.md brief and `pages/profile.vue`). Submission
+// is client-side/mock only (no real backend — see CLAUDE.md): picking the
+// required files/fields and pressing "Submit for review" marks that step
+// in_review via `useKycSubmissions`, session-only like the rest of this
+// app's mock data.
 const props = defineProps<{
   kyc: KycState
 }>()
 
 const { t } = useI18n()
+const kycSubmissions = useKycSubmissions()
 
 const STEP_ORDER: KycStepId[] = ['identity', 'selfie', 'address']
 
+// Overlays any steps submitted this session on top of the fetched state —
+// see `useKycSubmissions`.
+const effectiveKyc = computed(() => kycSubmissions.applyOverlay(props.kyc))
+
 const orderedSteps = computed(() =>
   STEP_ORDER
-    .map(id => props.kyc.steps.find(step => step.id === id))
+    .map(id => effectiveKyc.value.steps.find(step => step.id === id))
     .filter(step => step !== undefined),
 )
 
 function bodyFor(id: KycStepId, status: KycStepStatus) {
-  if (id === 'identity') {
-    return status === 'verified'
-      ? t('dashboard.profile.kyc.steps.identity.verifiedBody')
-      : t('dashboard.profile.kyc.steps.identity.pendingBody')
-  }
-  if (id === 'selfie') {
-    return status === 'in_review'
-      ? t('dashboard.profile.kyc.steps.selfie.inReviewBody')
-      : t('dashboard.profile.kyc.steps.selfie.pendingBody')
-  }
-  return t('dashboard.profile.kyc.steps.address.pendingBody')
+  if (status === 'verified') return t(`dashboard.profile.kyc.steps.${id}.verifiedBody`)
+  if (status === 'in_review') return t(`dashboard.profile.kyc.steps.${id}.inReviewBody`)
+  return t(`dashboard.profile.kyc.steps.${id}.pendingBody`)
 }
 
 function statusLabel(status: KycStepStatus) {
@@ -49,6 +49,64 @@ const STEP_CIRCLE_CLASS: Record<KycStepStatus, string> = {
   verified: 'bg-brand-50 text-brand-700 dark:bg-brand-700/20 dark:text-brand-100',
   in_review: 'bg-accent-50 text-accent-700 dark:bg-accent-700/20 dark:text-accent-100',
   not_started: 'bg-black/5 text-black/40 dark:bg-white/10 dark:text-white/40',
+}
+
+// --- Client-side (mock) file picking, one slot per upload -----------------
+
+interface PickedFile {
+  file: File
+  previewUrl: string
+}
+
+const nidNumber = ref('')
+const nidFront = ref<PickedFile | null>(null)
+const nidBack = ref<PickedFile | null>(null)
+const selfiePhoto = ref<PickedFile | null>(null)
+const addressDocument = ref<PickedFile | null>(null)
+
+const nidFrontInput = useTemplateRef('nidFrontInput')
+const nidBackInput = useTemplateRef('nidBackInput')
+const selfieInput = useTemplateRef('selfieInput')
+const addressInput = useTemplateRef('addressInput')
+
+function pick(file: File): PickedFile {
+  return { file, previewUrl: URL.createObjectURL(file) }
+}
+
+function fileFrom(event: Event): File | null {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0] ?? null
+  input.value = ''
+  return file
+}
+
+// Named per slot (rather than one generic handler taking a target ref) since
+// template refs inside `v-for` — even a guarded one that only ever renders
+// once — type as arrays, and a template expression can't pass an unwrapped
+// `ref.value` back out as a writable ref anyway.
+function onNidFrontChange(event: Event) {
+  const file = fileFrom(event)
+  if (file) nidFront.value = pick(file)
+}
+function onNidBackChange(event: Event) {
+  const file = fileFrom(event)
+  if (file) nidBack.value = pick(file)
+}
+function onSelfieChange(event: Event) {
+  const file = fileFrom(event)
+  if (file) selfiePhoto.value = pick(file)
+}
+function onAddressChange(event: Event) {
+  const file = fileFrom(event)
+  if (file) addressDocument.value = pick(file)
+}
+
+const canSubmitIdentity = computed(() => nidNumber.value.trim().length > 0 && !!nidFront.value && !!nidBack.value)
+const canSubmitSelfie = computed(() => !!selfiePhoto.value)
+const canSubmitAddress = computed(() => !!addressDocument.value)
+
+function submitStep(stepId: KycStepId) {
+  kycSubmissions.markSubmitted(stepId)
 }
 </script>
 
@@ -104,11 +162,106 @@ const STEP_CIRCLE_CLASS: Record<KycStepStatus, string> = {
             {{ bodyFor(step.id, step.status) }}
           </p>
 
+          <!-- Identity: NID number + front/back photo uploads -->
           <div
-            v-if="step.status === 'not_started'"
-            class="mt-3 flex flex-col items-center gap-2 rounded-xl border border-dashed border-black/20 p-6 text-black/40 dark:border-white/20 dark:text-white/40"
+            v-if="step.status === 'not_started' && step.id === 'identity'"
+            class="mt-3 flex flex-col gap-3"
           >
+            <div>
+              <label
+                for="kyc-nid-number"
+                class="mb-1.5 block text-xs font-bold"
+              >{{ t('dashboard.profile.kyc.nidNumberLabel') }}</label>
+              <UiInput
+                id="kyc-nid-number"
+                v-model="nidNumber"
+                :placeholder="t('dashboard.profile.kyc.nidNumberPlaceholder')"
+              />
+            </div>
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div
+                class="flex flex-col items-center gap-2 rounded-xl border border-dashed border-black/20 p-4 text-black/40 dark:border-white/20 dark:text-white/40"
+                :class="nidFront && 'border-solid border-brand-500 text-black dark:text-white'"
+              >
+                <img
+                  v-if="nidFront"
+                  :src="nidFront.previewUrl"
+                  :alt="t('dashboard.profile.kyc.nidFront')"
+                  class="h-16 w-full rounded-lg object-cover"
+                >
+                <UiIcon
+                  v-else
+                  name="upload-cloud"
+                  :size="22"
+                />
+                <div class="text-[12.5px]">
+                  {{ t('dashboard.profile.kyc.nidFront') }}
+                </div>
+                <UiButton
+                  variant="secondary"
+                  class="px-3 py-1.5 text-xs"
+                  @click="nidFrontInput?.click()"
+                >
+                  {{ nidFront ? t('dashboard.profile.kyc.replace') : t('dashboard.profile.kyc.browseFiles') }}
+                </UiButton>
+              </div>
+              <div
+                class="flex flex-col items-center gap-2 rounded-xl border border-dashed border-black/20 p-4 text-black/40 dark:border-white/20 dark:text-white/40"
+                :class="nidBack && 'border-solid border-brand-500 text-black dark:text-white'"
+              >
+                <img
+                  v-if="nidBack"
+                  :src="nidBack.previewUrl"
+                  :alt="t('dashboard.profile.kyc.nidBack')"
+                  class="h-16 w-full rounded-lg object-cover"
+                >
+                <UiIcon
+                  v-else
+                  name="upload-cloud"
+                  :size="22"
+                />
+                <div class="text-[12.5px]">
+                  {{ t('dashboard.profile.kyc.nidBack') }}
+                </div>
+                <UiButton
+                  variant="secondary"
+                  class="px-3 py-1.5 text-xs"
+                  @click="nidBackInput?.click()"
+                >
+                  {{ nidBack ? t('dashboard.profile.kyc.replace') : t('dashboard.profile.kyc.browseFiles') }}
+                </UiButton>
+              </div>
+            </div>
+            <UiButton
+              variant="primary"
+              class="self-start"
+              :disabled="!canSubmitIdentity"
+              @click="submitStep('identity')"
+            >
+              {{ t('dashboard.profile.kyc.submitStep') }}
+            </UiButton>
+          </div>
+
+          <!-- Selfie / address: a single photo or document upload -->
+          <div
+            v-else-if="step.status === 'not_started'"
+            class="mt-3 flex flex-col items-center gap-2 rounded-xl border border-dashed border-black/20 p-6 text-black/40 dark:border-white/20 dark:text-white/40"
+            :class="(step.id === 'selfie' ? selfiePhoto : addressDocument) && 'border-solid border-brand-500 text-black dark:text-white'"
+          >
+            <img
+              v-if="step.id === 'selfie' && selfiePhoto"
+              :src="selfiePhoto.previewUrl"
+              :alt="t('dashboard.profile.kyc.selfieUpload')"
+              class="h-24 w-24 rounded-full object-cover"
+            >
+            <img
+              v-else-if="step.id === 'address' && addressDocument"
+              :src="addressDocument.previewUrl"
+              :alt="t('dashboard.profile.kyc.addressUpload')"
+              class="h-20 w-full max-w-xs rounded-lg object-cover"
+            >
             <UiIcon
+              v-else
               name="upload-cloud"
               :size="26"
             />
@@ -118,13 +271,60 @@ const STEP_CIRCLE_CLASS: Record<KycStepStatus, string> = {
             <UiButton
               variant="secondary"
               class="px-4 py-2 text-xs"
+              @click="step.id === 'selfie' ? selfieInput?.click() : addressInput?.click()"
             >
-              {{ t('dashboard.profile.kyc.browseFiles') }}
+              {{ (step.id === 'selfie' ? selfiePhoto : addressDocument)
+                ? t('dashboard.profile.kyc.replace')
+                : t('dashboard.profile.kyc.browseFiles') }}
+            </UiButton>
+            <UiButton
+              variant="primary"
+              class="mt-1"
+              :disabled="step.id === 'selfie' ? !canSubmitSelfie : !canSubmitAddress"
+              @click="submitStep(step.id)"
+            >
+              {{ t('dashboard.profile.kyc.submitStep') }}
             </UiButton>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Hidden file inputs, kept outside the `v-for` above (a template ref
+         inside `v-for` types/binds as an array even when it only ever
+         renders once, since each step id shows its own guarded block). -->
+    <input
+      ref="nidFrontInput"
+      type="file"
+      accept="image/*"
+      class="hidden"
+      :aria-label="t('dashboard.profile.kyc.nidFront')"
+      @change="onNidFrontChange"
+    >
+    <input
+      ref="nidBackInput"
+      type="file"
+      accept="image/*"
+      class="hidden"
+      :aria-label="t('dashboard.profile.kyc.nidBack')"
+      @change="onNidBackChange"
+    >
+    <input
+      ref="selfieInput"
+      type="file"
+      accept="image/*"
+      class="hidden"
+      :aria-label="t('dashboard.profile.kyc.selfieUpload')"
+      @change="onSelfieChange"
+    >
+    <input
+      ref="addressInput"
+      type="file"
+      accept="image/*,application/pdf"
+      class="hidden"
+      :aria-label="t('dashboard.profile.kyc.addressUpload')"
+      @change="onAddressChange"
+    >
 
     <div class="flex items-center gap-2.5 text-xs text-black/40 dark:text-white/40">
       <UiIcon

@@ -24,6 +24,12 @@ const { data: purchases } = await useApi<PurchaseRecord[]>('/dashboard/purchases
   default: () => [],
 })
 
+// Includes bookings created this session by accepting an in-chat quote —
+// see `useBookings`.
+const { purchasesOverlay, clientsServedOverlay } = useBookings()
+const allClients = computed(() => [...(clients.value ?? []), ...clientsServedOverlay.value])
+const allPurchases = computed(() => [...(purchases.value ?? []), ...purchasesOverlay.value])
+
 const isProvider = computed(() => session.activeRole.value === 'provider')
 
 useSeoMeta({
@@ -54,9 +60,9 @@ useSeoMeta({
             :value="String(summary.providerKpis.activeGigs)"
           />
           <DashboardStatCard
-            :label="t('dashboard.overview.provider.kpi.earnings')"
-            :value="`$${summary.providerKpis.earningsThisMonthUsd.toLocaleString()}`"
-            :sublabel="t('dashboard.overview.provider.kpi.earningsSub', { percent: summary.providerKpis.earningsChangePercent })"
+            :label="t('dashboard.overview.provider.kpi.jobsCompleted')"
+            :value="String(summary.providerKpis.jobsCompletedThisMonth)"
+            :sublabel="t('dashboard.overview.provider.kpi.jobsCompletedSub', { percent: summary.providerKpis.jobsCompletedChangePercent })"
             tone="primary"
           />
           <DashboardStatCard
@@ -79,9 +85,8 @@ useSeoMeta({
             tone="primary"
           />
           <DashboardStatCard
-            :label="t('dashboard.overview.consumer.kpi.totalSpent')"
-            :value="`$${summary.consumerKpis.totalSpentUsd.toLocaleString()}`"
-            :sublabel="t('dashboard.overview.consumer.kpi.totalSpentSub', { count: summary.consumerKpis.totalOrders })"
+            :label="t('dashboard.overview.consumer.kpi.jobsBooked')"
+            :value="String(summary.consumerKpis.totalOrders)"
           />
           <DashboardStatCard
             :label="t('dashboard.overview.consumer.kpi.providersHired')"
@@ -101,30 +106,6 @@ useSeoMeta({
         v-if="isProvider"
         :kyc="summary.kyc"
       />
-      <div
-        v-else
-        class="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-black/10 p-5 dark:border-white/10"
-      >
-        <div class="flex items-center gap-3.5">
-          <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700 dark:bg-brand-700/20 dark:text-brand-100">
-            <UiIcon
-              name="wallet"
-              :size="21"
-            />
-          </span>
-          <div>
-            <div class="text-[15px] font-bold">
-              {{ t('dashboard.overview.consumer.paymentNudge.title') }}
-            </div>
-            <div class="mt-0.5 text-xs text-black/60 dark:text-white/60">
-              {{ t('dashboard.overview.consumer.paymentNudge.body') }}
-            </div>
-          </div>
-        </div>
-        <UiButton variant="ghost">
-          {{ t('dashboard.overview.consumer.paymentNudge.cta') }}
-        </UiButton>
-      </div>
 
       <div class="grid grid-cols-1 gap-5 lg:grid-cols-[2fr_1fr]">
         <div class="rounded-2xl border border-black/10 p-6 dark:border-white/10">
@@ -142,24 +123,24 @@ useSeoMeta({
           </h2>
           <div class="flex flex-col gap-2.5">
             <template v-if="isProvider">
-              <UiButton
-                variant="secondary"
-                class="justify-start!"
+              <NuxtLinkLocale
+                to="/services"
+                :class="[linkButtonClass('secondary'), 'w-full justify-start!']"
               >
                 <UiIcon
                   name="plus"
                   :size="16"
                 />{{ t('dashboard.overview.provider.quickActions.addService') }}
-              </UiButton>
-              <UiButton
-                variant="ghost"
-                class="justify-start!"
+              </NuxtLinkLocale>
+              <NuxtLinkLocale
+                to="/profile"
+                :class="[linkButtonClass('ghost'), 'w-full justify-start!']"
               >
                 <UiIcon
                   name="calendar"
                   :size="16"
                 />{{ t('dashboard.overview.provider.quickActions.updateAvailability') }}
-              </UiButton>
+              </NuxtLinkLocale>
               <NuxtLinkLocale
                 :to="{ path: '/profile', query: { tab: 'kyc' } }"
                 :class="[linkButtonClass('ghost'), 'w-full justify-start!']"
@@ -180,24 +161,24 @@ useSeoMeta({
                   :size="16"
                 />{{ t('dashboard.overview.consumer.quickActions.browse') }}
               </NuxtLinkLocale>
-              <UiButton
-                variant="ghost"
-                class="justify-start!"
+              <NuxtLinkLocale
+                to="/messages"
+                :class="[linkButtonClass('ghost'), 'w-full justify-start!']"
               >
                 <UiIcon
                   name="message"
                   :size="16"
                 />{{ t('dashboard.overview.consumer.quickActions.message') }}
-              </UiButton>
-              <UiButton
-                variant="ghost"
-                class="justify-start!"
+              </NuxtLinkLocale>
+              <NuxtLinkLocale
+                to="/purchases"
+                :class="[linkButtonClass('ghost'), 'w-full justify-start!']"
               >
                 <UiIcon
                   name="star"
                   :size="16"
                 />{{ t('dashboard.overview.consumer.quickActions.review') }}
-              </UiButton>
+              </NuxtLinkLocale>
             </template>
           </div>
         </div>
@@ -217,12 +198,12 @@ useSeoMeta({
         </div>
         <DashboardClientsTable
           v-if="isProvider"
-          :clients="clients ?? []"
+          :clients="allClients"
           :limit="3"
         />
         <DashboardPurchasesTable
           v-else
-          :purchases="purchases ?? []"
+          :purchases="allPurchases"
           :limit="3"
         />
       </div>

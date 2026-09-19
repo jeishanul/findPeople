@@ -38,14 +38,13 @@ export interface PurchaseRecord {
   providerName: string
   categoryId: string
   date: string
-  amountUsd: number
   status: BookingStatus
 }
 
 export interface ProviderKpis {
   activeGigs: number
-  earningsThisMonthUsd: number
-  earningsChangePercent: number
+  jobsCompletedThisMonth: number
+  jobsCompletedChangePercent: number
   clientsServed: number
   repeatClients: number
   averageRating: number
@@ -55,7 +54,6 @@ export interface ProviderKpis {
 export interface ConsumerKpis {
   activeOrders: number
   ordersInProgress: number
-  totalSpentUsd: number
   totalOrders: number
   providersHired: number
   providersHiredTwice: number
@@ -96,13 +94,23 @@ export interface ProviderProfileDetail {
   bio: string
   phone: string
   email: string
+  /** Client-side object URLs from a local file pick — see CLAUDE.md (no real
+   * upload backend yet), `null` until the provider picks one. */
+  photoUrl: string | null
+  coverPhotoUrl: string | null
+  recentWorkPhotoUrls: string[]
   serviceArea: string
-  categoryIds: string[]
+  categoryId: string
+  skillIds: string[]
+  yearsExperience: number
   hourlyRateUsd: number
   minVisitFeeUsd: number
   responseTimeHours: number
   availableDays: string[]
   memberSince: string
+  // Read-only, system-computed from real completed bookings/reviews — never
+  // provider-editable (see `pages/profile.vue`'s "Rate & availability" vs
+  // stats-summary split).
   averageRating: number
   reviewCount: number
   clientsServed: number
@@ -123,6 +131,20 @@ export interface MessageAttachment {
   sizeLabel?: string
 }
 
+export type QuoteStatus = 'pending' | 'accepted' | 'declined'
+
+/** A structured price a provider sends in-chat (e.g. "$50 for 3 hours, +$10/hr
+ * for extra work") — see `DashboardQuoteFormModal`/`DashboardQuoteCard` and
+ * `useBookings`. Accepting one creates a booking; see `useBookings.acceptQuote`. */
+export interface Quote {
+  id: string
+  basePriceUsd: number
+  baseHours: number
+  extraHourlyRateUsd: number
+  note?: string
+  status: QuoteStatus
+}
+
 export interface ConversationMessage {
   id: string
   fromMe: boolean
@@ -131,6 +153,9 @@ export interface ConversationMessage {
    * always effectively "seen" by the time we render them. */
   status?: MessageStatus
   attachment?: MessageAttachment
+  /** Present when this message is a structured price quote rather than a
+   * plain text/attachment message — see `Quote`. */
+  quote?: Quote
 }
 
 export interface Conversation {
@@ -145,6 +170,10 @@ export interface Conversation {
   /** Shown instead of "Online" when `online` is false. */
   lastSeenLabel: string
   messages: ConversationMessage[]
+  /** The marketplace provider id (`slugify`d name, matching
+   * `ProviderProfile.id`) this conversation is with — links the two
+   * otherwise-separate mock datasets. Absent for older seed rows. */
+  providerId?: string
 }
 
 export type NotificationTopic = 'bookings' | 'payments' | 'messages'
@@ -185,36 +214,6 @@ export interface ServiceListing {
   status: ServiceStatus
 }
 
-export interface EarningsMonth {
-  label: string
-  amountUsd: number
-}
-
-export interface PayoutMethod {
-  label: string
-  sublabel: string
-}
-
-export interface EarningsSummary {
-  availableBalanceUsd: number
-  pendingClearanceUsd: number
-  pendingClearanceDays: number
-  paidOutThisMonthUsd: number
-  lifetimeEarningsUsd: number
-  monthlyHistory: EarningsMonth[]
-  payoutMethod: PayoutMethod
-}
-
-export type TransactionType = 'booking' | 'payout' | 'refund'
-
-export interface Transaction {
-  id: string
-  description: string
-  date: string
-  type: TransactionType
-  amountUsd: number
-}
-
 export interface SavedProvider {
   id: string
   name: string
@@ -228,19 +227,8 @@ export interface SavedProvider {
 
 export interface NotificationPreferences {
   bookingRequests: boolean
-  paymentsPayouts: boolean
   messages: boolean
   marketing: boolean
-}
-
-export type CardBrand = 'visa' | 'mastercard'
-
-export interface SavedPaymentMethod {
-  id: string
-  brand: CardBrand
-  last4: string
-  expiry: string
-  isDefault: boolean
 }
 
 export interface AccountSettings {
@@ -250,6 +238,5 @@ export interface AccountSettings {
   twoFactorEnabled: boolean
   passwordChangedLabel: string
   notificationPreferences: NotificationPreferences
-  paymentMethods: SavedPaymentMethod[]
   language: string
 }

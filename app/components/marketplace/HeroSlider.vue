@@ -7,7 +7,7 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{
-  search: [{ category: string, location: string }]
+  search: [{ category: string, province: string, city: string, barangay: string }]
 }>()
 
 const { t } = useI18n()
@@ -32,7 +32,7 @@ const toneClasses: Record<'primary' | 'accent', string> = {
   accent: 'bg-accent-50 dark:bg-accent-700/20',
 }
 
-function handleSearch(payload: { category: string, location: string }) {
+function handleSearch(payload: { category: string, province: string, city: string, barangay: string }) {
   emit('search', payload)
 }
 

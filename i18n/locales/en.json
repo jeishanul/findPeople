@@ -7,7 +7,11 @@
     "switchToDark": "Switch to dark mode"
   },
   "ui": {
-    "scrollToTop": "Scroll to top"
+    "scrollToTop": "Scroll to top",
+    "selectSearch": {
+      "searchPlaceholder": "Search...",
+      "noResults": "No matches"
+    }
   },
   "auth": {
     "close": "Close",
@@ -89,7 +93,8 @@
     "browseServices": "Browse services",
     "login": "Log in",
     "signup": "Sign up",
-    "dashboard": "Dashboard"
+    "messages": "Messages",
+    "notifications": "Notifications"
   },
   "footer": {
     "tagline": "Connecting skilled local professionals with people who need work done.",
@@ -128,8 +133,14 @@
     "search": {
       "categoryLabel": "Service category",
       "categoryPlaceholder": "What service?",
-      "locationLabel": "Location",
       "locationPlaceholder": "Your location",
+      "provinceLabel": "Province",
+      "provincePlaceholder": "Select province",
+      "cityLabel": "City / Municipality",
+      "cityPlaceholder": "Select city or municipality",
+      "barangayLabel": "Barangay",
+      "barangayPlaceholder": "Select barangay",
+      "clearLocation": "Clear location",
       "submit": "Search"
     },
     "hero": {
@@ -169,8 +180,8 @@
           "description": "See ratings, rates and reviews from your area."
         },
         "book": {
-          "title": "Book & pay securely",
-          "description": "Confirm a time and pay safely through FindPeople."
+          "title": "Agree & get it done",
+          "description": "Message the provider, agree on scope and price, then pay them directly in cash once the job's done."
         },
         "review": {
           "title": "Rate & rebook",
@@ -201,9 +212,8 @@
     },
     "provider": {
       "yearsExperience": "{years} yrs experience",
-      "distanceAway": "{distance} km away",
-      "perHour": "/hr",
-      "fromRate": "From ${rate}/hr",
+      "estimate": "Est. ${rate}/hr",
+      "fromEstimate": "Est. from ${rate}/hr",
       "message": "Message",
       "viewProfile": "View profile"
     },
@@ -235,7 +245,7 @@
       "reasons": {
         "verified": "Verified & insured pros",
         "support": "24/7 customer support",
-        "payments": "Secure, cashless payments",
+        "payments": "Transparent pricing, no markups",
         "reviews": "Rated by real customers"
       }
     },
@@ -310,11 +320,11 @@
         },
         "unhappy": {
           "question": "What happens if I'm not happy with the service?",
-          "answer": "Reach out to our support team within 48 hours of the job and we'll help make it right, including a redo or refund where applicable."
+          "answer": "Reach out to our support team within 48 hours of the job and we'll help make it right, including arranging a redo with the provider."
         },
         "payments": {
           "question": "How do payments work?",
-          "answer": "You pay securely through FindPeople once the job is booked. Funds are only released to the professional after the job is marked complete."
+          "answer": "FindPeople doesn't process payments. The rate you see is a starting estimate — you and the provider agree on a final price directly, and you pay them in cash once the job is complete."
         },
         "recurring": {
           "question": "Can I book the same pro for recurring service?",
@@ -330,7 +340,7 @@
       "heading": "Filters",
       "resetAll": "Reset all",
       "location": "Location",
-      "category": "Category",
+      "service": "Service",
       "minRating": "Minimum rating",
       "ratingAndUp": "{rating} & up",
       "priceRange": "Price range",
@@ -363,8 +373,11 @@
       "reviews": "Reviews ({count})",
       "postedDaysAgo": "{days} days ago",
       "minVisitFee": "${fee} min. visit",
+      "priceDisclaimer": "Discuss the job and agree on a price before work begins. The final price is paid in cash directly to the provider.",
       "identityChecked": "Identity & background checked",
-      "availability": "Available Mon–Sat, 8am–7pm",
+      "availabilityFormatted": "Available {days}",
+      "availabilityUnavailable": "Availability not set",
+      "everyDay": "every day",
       "serviceArea": "Serves the surrounding area · within {radius} km",
       "stats": {
         "jobsCompleted": "Jobs completed",
@@ -427,7 +440,6 @@
       "kycPending": "Pending",
       "myServices": "My services",
       "clientsServed": "Clients served",
-      "earnings": "Earnings",
       "browseServices": "Browse",
       "alwaysOn": "Open",
       "myPurchases": "My purchases",
@@ -441,7 +453,7 @@
     },
     "dualRoleBanner": {
       "title": "Every FindPeople account can both offer and book services",
-      "body": "Switching your view only changes this dashboard — Browse Services and My Purchases stay available no matter which mode you're in.",
+      "body": "Switching your view swaps between your provider and consumer panels — Browse Services is always one click away, however you're set.",
       "cta": "Browse services"
     },
     "overview": {
@@ -450,8 +462,8 @@
       "provider": {
         "kpi": {
           "activeGigs": "Active gigs",
-          "earnings": "Earnings this month",
-          "earningsSub": "↑ {percent}% vs last month",
+          "jobsCompleted": "Jobs completed this month",
+          "jobsCompletedSub": "↑ {percent}% vs last month",
           "clientsServed": "Clients served",
           "clientsServedSub": "{count} repeat clients",
           "rating": "Average rating",
@@ -459,12 +471,12 @@
         },
         "kycNudge": {
           "title": "Identity verification pending",
-          "body": "Complete KYC to start receiving bookings and get paid out.",
+          "body": "Complete KYC to start receiving bookings.",
           "cta": "Complete verification"
         },
         "kycVerified": {
           "title": "Identity verified",
-          "body": "You're all set to receive bookings and get paid out."
+          "body": "You're all set to start receiving bookings."
         },
         "quickActions": {
           "addService": "Add a new service",
@@ -479,17 +491,11 @@
         "kpi": {
           "activeOrders": "Active orders",
           "activeOrdersSub": "{count} in progress",
-          "totalSpent": "Total spent",
-          "totalSpentSub": "Across {count} orders",
+          "jobsBooked": "Jobs booked",
           "providersHired": "Providers hired",
           "providersHiredSub": "{count} booked twice",
           "savedProviders": "Saved providers",
           "savedProvidersSub": "{count} available now"
-        },
-        "paymentNudge": {
-          "title": "Payment method on file",
-          "body": "Visa •••• 4471 — used for your last 3 bookings.",
-          "cta": "Manage payment methods"
         },
         "quickActions": {
           "browse": "Browse services",
@@ -560,7 +566,7 @@
         "cta": "Set up my provider profile"
       },
       "summary": {
-        "totalSpent": "Total spent",
+        "totalJobs": "Jobs booked",
         "providersHired": "Providers hired",
         "activeOrders": "Active orders"
       },
@@ -574,20 +580,27 @@
     },
     "profile": {
       "title": "My profile & verification",
-      "subtitle": "Manage how clients see you, and verify your identity to get paid",
+      "subtitle": "Manage how clients see you, and verify your identity to start accepting bookings",
       "tabs": {
         "details": "Profile details",
         "kyc": "KYC verification · required"
       },
       "changePhoto": "Change photo",
+      "addCoverPhoto": "Add cover photo",
+      "changeCoverPhoto": "Change cover photo",
+      "coverPhoto": "Cover photo",
       "memberSince": "Member since {date}",
       "ratingSummary": "{rating} average rating · {count} reviews",
       "clientsServedSummary": "{count} clients served",
       "sections": {
         "basicInfo": "Basic information",
         "skills": "Categories & skills",
-        "rateAvailability": "Rate & availability"
+        "rateAvailability": "Rate & availability",
+        "recentWork": "Recent work"
       },
+      "recentWorkHint": "Add up to 6 photos of past jobs — shown on your public profile.",
+      "addPhoto": "Add photo",
+      "removePhoto": "Remove photo",
       "fields": {
         "fullName": "Full name",
         "headline": "Professional headline",
@@ -595,17 +608,25 @@
         "phone": "Phone",
         "email": "Email",
         "serviceArea": "Service area",
-        "hourlyRate": "Hourly rate",
+        "primaryCategory": "Primary category",
+        "skills": "Skills",
+        "yearsExperience": "Years of experience",
+        "hourlyRate": "Starting rate estimate",
+        "hourlyRateHelp": "Shown to consumers as a starting point — you'll agree on the final price together.",
         "minVisitFee": "Minimum visit fee",
         "responseTime": "Response time",
-        "availability": "Weekly availability"
+        "availability": "Weekly availability",
+        "availabilityPreview": "Clients will see: {text}"
       },
       "addSkill": "Add skill",
+      "addSkillPlaceholder": "Choose a skill to add",
+      "removeSkill": "Remove skill",
       "cancel": "Cancel",
       "save": "Save changes",
+      "saved": "Saved",
       "kyc": {
         "mandatoryTitle": "Verification is mandatory before you can accept bookings",
-        "mandatoryBody": "FindPeople verifies every service provider's identity to keep clients safe. Payouts are held until all three steps are approved.",
+        "mandatoryBody": "FindPeople verifies every service provider's identity to keep clients safe. You can't accept bookings until all three steps are approved.",
         "statusVerified": "Verified",
         "statusInReview": "In review",
         "statusNotStarted": "Not started",
@@ -613,18 +634,30 @@
           "identity": {
             "title": "Government-issued ID",
             "verifiedBody": "Verified and confirmed.",
-            "pendingBody": "Upload a driver's license or passport."
+            "inReviewBody": "Submitted — our team typically reviews within 24 hours.",
+            "pendingBody": "Enter your NID number and upload clear photos of the front and back."
           },
           "selfie": {
             "title": "Selfie verification",
+            "verifiedBody": "Verified and confirmed.",
             "inReviewBody": "Submitted — our team typically reviews within 24 hours.",
             "pendingBody": "Take a quick selfie to confirm it's really you."
           },
           "address": {
             "title": "Proof of address",
+            "verifiedBody": "Verified and confirmed.",
+            "inReviewBody": "Submitted — our team typically reviews within 24 hours.",
             "pendingBody": "Upload a recent utility bill or bank statement (last 3 months)."
           }
         },
+        "nidNumberLabel": "NID number",
+        "nidNumberPlaceholder": "Enter your National ID number",
+        "nidFront": "NID — front",
+        "nidBack": "NID — back",
+        "selfieUpload": "Selfie photo",
+        "addressUpload": "Proof of address",
+        "replace": "Replace",
+        "submitStep": "Submit for review",
         "dropzone": "Drag a file here, or",
         "browseFiles": "Browse files",
         "complianceNote": "Your documents are encrypted and only used for identity verification, per our Trust & Safety policy."
@@ -660,7 +693,31 @@
       "removeAttachment": "Remove attachment",
       "statusSent": "Sent",
       "statusDelivered": "Delivered",
-      "statusSeen": "Seen"
+      "statusSeen": "Seen",
+      "sendQuote": "Send a quote",
+      "quote": {
+        "formTitle": "Send a quote",
+        "formSubtitle": "A structured price for this job — shown as a card in the chat with Accept/Decline.",
+        "basePriceLabel": "Base price",
+        "basePricePlaceholder": "e.g. $50",
+        "baseHoursLabel": "Base hours",
+        "baseHoursPlaceholder": "e.g. 3",
+        "extraRateLabel": "Extra hourly rate",
+        "extraRatePlaceholder": "e.g. $10",
+        "extraRateHelp": "Charged per hour for any work beyond the base hours above.",
+        "noteLabel": "Note (optional)",
+        "notePlaceholder": "What's included, materials, etc.",
+        "cancel": "Cancel",
+        "send": "Send quote",
+        "cardHeading": "Price quote",
+        "forHours": "for {hours}h",
+        "extraRateNote": "+${rate}/hr for extra work",
+        "accept": "Accept",
+        "decline": "Decline",
+        "accepted": "Accepted",
+        "declined": "Declined",
+        "acceptedBooked": "Booked — see it in your bookings."
+      }
     },
     "notificationsPage": {
       "title": "Notifications",
@@ -697,37 +754,27 @@
       },
       "edit": "Edit",
       "preview": "Preview",
-      "resume": "Resume",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
       "bookingsCount": "{count} bookings",
       "statusActive": "Active",
-      "statusPaused": "Paused"
-    },
-    "earnings": {
-      "title": "Earnings",
-      "subtitle": "Track what you've made and manage payouts",
-      "summary": {
-        "available": "Available balance",
-        "availableSub": "Ready to withdraw",
-        "pending": "Pending clearance",
-        "pendingSub": "Clears in {days} days",
-        "paidOut": "Paid out this month",
-        "lifetime": "Lifetime earnings"
-      },
-      "chartHeading": "Earnings, last 6 months",
-      "payoutMethodHeading": "Payout method",
-      "withdraw": "Withdraw ${amount}",
-      "changePayoutMethod": "Change payout method",
-      "transactionsHeading": "Recent transactions",
-      "table": {
-        "description": "Description",
-        "date": "Date",
-        "type": "Type",
-        "amount": "Amount"
-      },
-      "types": {
-        "booking": "Booking",
-        "payout": "Payout",
-        "refund": "Refund"
+      "statusPaused": "Paused",
+      "form": {
+        "addTitle": "Add a new service",
+        "editTitle": "Edit service",
+        "previewTitle": "Preview",
+        "titleLabel": "Service title",
+        "categoryLabel": "Category",
+        "categoryPlaceholder": "Select a category",
+        "descriptionLabel": "Description",
+        "durationLabel": "Duration",
+        "durationPlaceholder": "e.g. 2-3 hours",
+        "priceLabel": "Price",
+        "pricePlaceholder": "e.g. $45/hr or $150 flat",
+        "cancel": "Cancel",
+        "save": "Save changes",
+        "create": "Create service",
+        "closePreview": "Close preview"
       }
     },
     "savedProviders": {
@@ -743,37 +790,32 @@
     },
     "settings": {
       "title": "Settings",
-      "subtitle": "Account, security, notifications and payment preferences",
+      "subtitle": "Account, security and notification preferences",
       "account": {
         "heading": "Account",
         "fullName": "Full name",
         "email": "Email",
         "phone": "Phone",
         "editProfile": "Edit profile",
-        "change": "Change"
+        "editHint": "Name, email and phone are all managed from your profile."
       },
       "security": {
         "heading": "Security",
         "password": "Password",
         "passwordChanged": "Last changed {time}",
+        "passwordUpdated": "Password updated",
         "changePassword": "Change password",
+        "newPasswordLabel": "New password",
+        "confirmPasswordLabel": "Confirm new password",
+        "updatePassword": "Update password",
         "twoFa": "Two-factor authentication",
         "twoFaBody": "Add an extra layer of security at login"
       },
       "notifications": {
         "heading": "Notification preferences",
         "bookingRequests": "New booking requests",
-        "paymentsPayouts": "Payments & payouts",
         "messages": "Messages",
         "marketing": "Product tips & marketing"
-      },
-      "payment": {
-        "heading": "Payment methods",
-        "addMethod": "Add method",
-        "default": "Default",
-        "makeDefault": "Make default",
-        "remove": "Remove",
-        "expires": "Expires {date}"
       },
       "language": {
         "heading": "Language & region",
@@ -785,7 +827,11 @@
         "deactivate": "Deactivate account",
         "deactivateBody": "Hide your profile and pause bookings temporarily",
         "delete": "Delete account",
-        "deleteBody": "Permanently remove your account and all data"
+        "deleteBody": "Permanently remove your account and all data",
+        "confirmDeactivateTitle": "Deactivate your account?",
+        "confirmDeactivateBody": "Your profile and listings will be hidden and bookings paused until you log back in. You'll be signed out now.",
+        "confirmDeleteTitle": "Delete your account?",
+        "confirmDeleteBody": "This permanently removes your account and all data. This can't be undone. You'll be signed out now."
       }
     }
   }

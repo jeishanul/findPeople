@@ -49,7 +49,7 @@ const timeLabel = computed(() => props.item.timeAgoHours < 24
 
 <template>
   <div
-    class="flex gap-3.5 rounded-xl px-2 py-3.5"
+    class="mb-1.5 flex gap-3.5 rounded-xl px-2 py-3.5 last:mb-0"
     :class="!item.read && 'bg-brand-50 dark:bg-brand-700/10'"
   >
     <span

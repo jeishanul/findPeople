@@ -1,17 +1,22 @@
 <script setup lang="ts">
 import type { ServiceCategory } from '#shared/types/marketplace'
 
-// Auto-imported as <MarketplaceProviderFilterSidebar />.
+// Auto-imported as <MarketplaceProviderFilterSidebar />. The service picker
+// is multi-select (checkable rows, like the rating filter below it) — a
+// consumer can filter for several kinds of pro at once.
 defineProps<{
-  category: ServiceCategory | null
+  categories: ServiceCategory[]
 }>()
 
 const emit = defineEmits<{
   apply: []
-  clearCategory: []
+  reset: []
 }>()
 
-const location = defineModel<string>('location', { default: '' })
+const categoryIds = defineModel<string[]>('categoryIds', { default: () => [] })
+const provinceCode = defineModel<string | null>('province', { default: null })
+const cityCode = defineModel<string | null>('city', { default: null })
+const barangay = defineModel<string | null>('barangay', { default: null })
 const minRating = defineModel<number>('minRating', { default: 0 })
 const verifiedOnly = defineModel<boolean>('verifiedOnly', { default: false })
 const minPrice = defineModel<number>('minPrice', { default: PRICE_MIN })
@@ -21,12 +26,22 @@ const { t } = useI18n()
 
 const RATING_OPTIONS = [5, 4, 3, 2, 1] as const
 
+function toggleCategory(id: string) {
+  categoryIds.value = categoryIds.value.includes(id)
+    ? categoryIds.value.filter(existing => existing !== id)
+    : [...categoryIds.value, id]
+}
+
 function resetAll() {
+  categoryIds.value = []
+  provinceCode.value = null
+  cityCode.value = null
+  barangay.value = null
   minRating.value = 0
   verifiedOnly.value = false
   minPrice.value = PRICE_MIN
   maxPrice.value = PRICE_MAX
-  emit('clearCategory')
+  emit('reset')
 }
 </script>
 
@@ -57,32 +72,51 @@ function resetAll() {
       >
         {{ t('marketplace.filters.location') }}
       </label>
-      <UiInput
+      <UiLocationPicker
         id="filter-sidebar-location"
-        v-model="location"
-        icon="map-pin"
-        :placeholder="t('marketplace.search.locationPlaceholder')"
+        v-model:province="provinceCode"
+        v-model:city="cityCode"
+        v-model:barangay="barangay"
       />
     </div>
 
-    <div
-      v-if="category"
-      class="mb-6"
-    >
+    <div class="mb-6">
       <p class="mb-2.5 text-xs font-bold uppercase tracking-wide text-black/50 dark:text-white/50">
-        {{ t('marketplace.filters.category') }}
+        {{ t('marketplace.filters.service') }}
       </p>
-      <button
-        type="button"
-        class="inline-flex items-center gap-2 rounded-full bg-brand-50 px-4 py-2 text-sm font-semibold text-brand-700 dark:bg-brand-700/20 dark:text-brand-100"
-        @click="resetAll"
-      >
-        {{ t(`marketplace.categories.${category.id}.label`) }}
-        <UiIcon
-          name="x"
-          :size="13"
-        />
-      </button>
+      <div class="flex flex-col gap-1">
+        <button
+          v-for="cat in categories"
+          :key="cat.id"
+          type="button"
+          class="flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition-colors"
+          :class="categoryIds.includes(cat.id)
+            ? 'bg-brand-50 dark:bg-brand-700/20'
+            : 'hover:bg-black/5 dark:hover:bg-white/10'"
+          :aria-pressed="categoryIds.includes(cat.id)"
+          @click="toggleCategory(cat.id)"
+        >
+          <span
+            class="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[5px] border transition-colors"
+            :class="categoryIds.includes(cat.id)
+              ? 'border-brand-600 bg-brand-600'
+              : 'border-black/20 dark:border-white/25'"
+          >
+            <UiIcon
+              v-if="categoryIds.includes(cat.id)"
+              name="check"
+              :size="11"
+              class="text-white"
+            />
+          </span>
+          <span
+            class="text-sm font-semibold"
+            :class="categoryIds.includes(cat.id) ? 'text-brand-700 dark:text-brand-100' : 'text-black/70 dark:text-white/70'"
+          >
+            {{ t(`marketplace.categories.${cat.id}.label`) }}
+          </span>
+        </button>
+      </div>
     </div>
 
     <div class="mb-6">

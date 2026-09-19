@@ -3,8 +3,11 @@
 // not the URL — each page below sets its own top-level route, e.g. /profile,
 // /messages): sidebar navigation (desktop) / horizontal nav (mobile), and a
 // topbar with the provider/consumer role switch, theme toggle and logout.
-// Browse Services and My Purchases stay in the sidebar regardless of the
-// active role — see `DashboardDualRoleBanner` for why that can't be optional.
+// Provider-only nav (My profile/Verification, My Services, Clients Served)
+// and consumer-only nav (My Purchases, Saved Providers) show/hide based on
+// `session.activeRole` — Dashboard, Messages, Notifications, Browse Services,
+// Settings and Log out stay reachable in both modes (see
+// `DashboardDualRoleBanner` for why Browse specifically can't be optional).
 const { t } = useI18n()
 const session = useSession()
 const route = useRoute()
@@ -22,15 +25,28 @@ const isOnProfilePage = computed(() => isActive('/profile'))
 const isKycTabActive = computed(() => isOnProfilePage.value && route.query.tab === 'kyc')
 const isProfileTabActive = computed(() => isOnProfilePage.value && route.query.tab !== 'kyc')
 
+const isProvider = computed(() => session.activeRole.value === 'provider')
+const isConsumer = computed(() => session.activeRole.value === 'consumer')
+
+const { unreadMessages, unreadNotifications } = useUnreadCounts()
+const firstName = computed(() => session.name.value.split(' ')[0] ?? '')
+
 const mobileNavItems = computed(() => [
   { to: '/dashboard', label: t('dashboard.sidebar.dashboard') },
-  { to: '/profile', label: t('dashboard.sidebar.myProfile') },
-  { to: '/clients', label: t('dashboard.sidebar.clientsServed') },
-  { to: '/services', label: t('dashboard.sidebar.myServices') },
-  { to: '/earnings', label: t('dashboard.sidebar.earnings') },
+  ...(isProvider.value
+    ? [
+        { to: '/profile', label: t('dashboard.sidebar.myProfile') },
+        { to: '/clients', label: t('dashboard.sidebar.clientsServed') },
+        { to: '/services', label: t('dashboard.sidebar.myServices') },
+      ]
+    : []),
   { to: '/browse', label: t('dashboard.sidebar.browseServices') },
-  { to: '/purchases', label: t('dashboard.sidebar.myPurchases') },
-  { to: '/saved-providers', label: t('dashboard.sidebar.savedProviders') },
+  ...(isConsumer.value
+    ? [
+        { to: '/purchases', label: t('dashboard.sidebar.myPurchases') },
+        { to: '/saved-providers', label: t('dashboard.sidebar.savedProviders') },
+      ]
+    : []),
   { to: '/messages', label: t('dashboard.sidebar.messages') },
   { to: '/notifications', label: t('dashboard.sidebar.notifications') },
   { to: '/settings', label: t('dashboard.sidebar.settings') },
@@ -102,67 +118,60 @@ function handleLogout() {
         />{{ t('dashboard.sidebar.notifications') }}
       </NuxtLinkLocale>
 
-      <div class="mt-3.5 px-3 pb-1 text-[11px] font-bold tracking-wide text-black/40 uppercase dark:text-white/40">
-        {{ t('dashboard.sidebar.asProvider') }}
-      </div>
-      <NuxtLinkLocale
-        to="/profile"
-        :class="linkClassActive(isProfileTabActive)"
-      >
-        <UiIcon
-          name="user"
-          :size="18"
-        />{{ t('dashboard.sidebar.myProfile') }}
-      </NuxtLinkLocale>
-      <NuxtLinkLocale
-        :to="{ path: '/profile', query: { tab: 'kyc' } }"
-        class="flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors"
-        :class="isKycTabActive
-          ? 'bg-brand-50 text-brand-700 dark:bg-brand-700/20 dark:text-brand-100'
-          : 'text-black/60 hover:bg-black/5 hover:text-black dark:text-white/60 dark:hover:bg-white/10 dark:hover:text-white'"
-      >
-        <span class="flex items-center gap-3 whitespace-nowrap">
-          <UiIcon
-            name="shield-check"
-            :size="18"
-            class="shrink-0"
-          />{{ t('dashboard.sidebar.kyc') }}
-        </span>
-        <UiTag
-          variant="danger"
-          size="sm"
-          class="shrink-0"
+      <template v-if="isProvider">
+        <div class="mt-3.5 px-3 pb-1 text-[11px] font-bold tracking-wide text-black/40 uppercase dark:text-white/40">
+          {{ t('dashboard.sidebar.asProvider') }}
+        </div>
+        <NuxtLinkLocale
+          to="/profile"
+          :class="linkClassActive(isProfileTabActive)"
         >
-          {{ t('dashboard.sidebar.kycPending') }}
-        </UiTag>
-      </NuxtLinkLocale>
-      <NuxtLinkLocale
-        to="/services"
-        :class="linkClass('/services')"
-      >
-        <UiIcon
-          name="briefcase"
-          :size="18"
-        />{{ t('dashboard.sidebar.myServices') }}
-      </NuxtLinkLocale>
-      <NuxtLinkLocale
-        to="/clients"
-        :class="linkClass('/clients')"
-      >
-        <UiIcon
-          name="users"
-          :size="18"
-        />{{ t('dashboard.sidebar.clientsServed') }}
-      </NuxtLinkLocale>
-      <NuxtLinkLocale
-        to="/earnings"
-        :class="linkClass('/earnings')"
-      >
-        <UiIcon
-          name="wallet"
-          :size="18"
-        />{{ t('dashboard.sidebar.earnings') }}
-      </NuxtLinkLocale>
+          <UiIcon
+            name="user"
+            :size="18"
+          />{{ t('dashboard.sidebar.myProfile') }}
+        </NuxtLinkLocale>
+        <NuxtLinkLocale
+          :to="{ path: '/profile', query: { tab: 'kyc' } }"
+          class="flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors"
+          :class="isKycTabActive
+            ? 'bg-brand-50 text-brand-700 dark:bg-brand-700/20 dark:text-brand-100'
+            : 'text-black/60 hover:bg-black/5 hover:text-black dark:text-white/60 dark:hover:bg-white/10 dark:hover:text-white'"
+        >
+          <span class="flex items-center gap-3 whitespace-nowrap">
+            <UiIcon
+              name="shield-check"
+              :size="18"
+              class="shrink-0"
+            />{{ t('dashboard.sidebar.kyc') }}
+          </span>
+          <UiTag
+            variant="danger"
+            size="sm"
+            class="shrink-0"
+          >
+            {{ t('dashboard.sidebar.kycPending') }}
+          </UiTag>
+        </NuxtLinkLocale>
+        <NuxtLinkLocale
+          to="/services"
+          :class="linkClass('/services')"
+        >
+          <UiIcon
+            name="briefcase"
+            :size="18"
+          />{{ t('dashboard.sidebar.myServices') }}
+        </NuxtLinkLocale>
+        <NuxtLinkLocale
+          to="/clients"
+          :class="linkClass('/clients')"
+        >
+          <UiIcon
+            name="users"
+            :size="18"
+          />{{ t('dashboard.sidebar.clientsServed') }}
+        </NuxtLinkLocale>
+      </template>
 
       <div class="mt-3.5 px-3 pb-1 text-[11px] font-bold tracking-wide text-black/40 uppercase dark:text-white/40">
         {{ t('dashboard.sidebar.asConsumer') }}
@@ -186,24 +195,26 @@ function handleLogout() {
           {{ t('dashboard.sidebar.alwaysOn') }}
         </UiTag>
       </NuxtLinkLocale>
-      <NuxtLinkLocale
-        to="/purchases"
-        :class="linkClass('/purchases')"
-      >
-        <UiIcon
-          name="bag"
-          :size="18"
-        />{{ t('dashboard.sidebar.myPurchases') }}
-      </NuxtLinkLocale>
-      <NuxtLinkLocale
-        to="/saved-providers"
-        :class="linkClass('/saved-providers')"
-      >
-        <UiIcon
-          name="heart"
-          :size="18"
-        />{{ t('dashboard.sidebar.savedProviders') }}
-      </NuxtLinkLocale>
+      <template v-if="isConsumer">
+        <NuxtLinkLocale
+          to="/purchases"
+          :class="linkClass('/purchases')"
+        >
+          <UiIcon
+            name="bag"
+            :size="18"
+          />{{ t('dashboard.sidebar.myPurchases') }}
+        </NuxtLinkLocale>
+        <NuxtLinkLocale
+          to="/saved-providers"
+          :class="linkClass('/saved-providers')"
+        >
+          <UiIcon
+            name="heart"
+            :size="18"
+          />{{ t('dashboard.sidebar.savedProviders') }}
+        </NuxtLinkLocale>
+      </template>
 
       <div class="flex-1" />
       <NuxtLinkLocale
@@ -243,10 +254,42 @@ function handleLogout() {
 
         <DashboardRoleSwitch class="hidden lg:inline-flex" />
 
-        <div class="ml-auto flex items-center gap-2.5">
+        <div class="ml-auto flex items-center gap-1.5">
+          <NuxtLinkLocale
+            to="/messages"
+            class="relative flex h-9 w-9 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10"
+            :aria-label="t('nav.messages')"
+          >
+            <UiIcon
+              name="message"
+              :size="18"
+            />
+            <span
+              v-if="unreadMessages > 0"
+              class="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent-600 px-1 text-[10px] font-bold text-white"
+            >{{ formatBadgeCount(unreadMessages) }}</span>
+          </NuxtLinkLocale>
+          <NuxtLinkLocale
+            to="/notifications"
+            class="relative flex h-9 w-9 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10"
+            :aria-label="t('nav.notifications')"
+          >
+            <UiIcon
+              name="bell"
+              :size="18"
+            />
+            <span
+              v-if="unreadNotifications > 0"
+              class="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent-600 px-1 text-[10px] font-bold text-white"
+            >{{ formatBadgeCount(unreadNotifications) }}</span>
+          </NuxtLinkLocale>
+          <span class="mx-1 h-6 w-px shrink-0 bg-black/10 dark:bg-white/10" />
           <UiThemeToggle />
-          <span class="flex h-9 w-9 items-center justify-center rounded-full bg-brand-600 font-display text-xs font-bold text-white">
-            {{ session.initials.value }}
+          <span class="flex items-center gap-2 py-1 pr-1 pl-1 text-sm font-semibold">
+            <span class="flex h-9 w-9 items-center justify-center rounded-full bg-brand-600 font-display text-xs font-bold text-white">
+              {{ session.initials.value }}
+            </span>
+            {{ firstName }}
           </span>
         </div>
       </div>

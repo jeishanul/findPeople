@@ -2,10 +2,11 @@
 import type { UserRole } from '#shared/types/dashboard'
 
 // Auto-imported as <DashboardRoleSwitch/>. Lives in the dashboard topbar
-// (see `layouts/dashboard.vue`) — switches which widgets the overview
-// emphasizes. It never gates a route: Browse Services and My Purchases stay
-// reachable from the sidebar regardless of which role is active (see
-// `DashboardDualRoleBanner` and CLAUDE.md's brief for this feature).
+// (see `layouts/dashboard.vue`) — switches which panel you're in. Provider-
+// only nav (My profile/Verification, My Services, Clients Served) and
+// consumer-only nav (My Purchases, Saved Providers) show/hide based on this;
+// Browse Services stays reachable in both modes (see `DashboardDualRoleBanner`).
+// Shown Consumer-first since most people who sign up are consumers.
 const session = useSession()
 const { t } = useI18n()
 
@@ -23,17 +24,17 @@ function optionClass(role: UserRole) {
   <div class="inline-flex gap-1 rounded-full border border-black/10 bg-black/[0.03] p-1 dark:border-white/10 dark:bg-white/[0.06]">
     <button
       type="button"
-      :class="optionClass('provider')"
-      @click="session.setActiveRole('provider')"
-    >
-      {{ t('dashboard.roleSwitch.provider') }}
-    </button>
-    <button
-      type="button"
       :class="optionClass('consumer')"
       @click="session.setActiveRole('consumer')"
     >
       {{ t('dashboard.roleSwitch.consumer') }}
+    </button>
+    <button
+      type="button"
+      :class="optionClass('provider')"
+      @click="session.setActiveRole('provider')"
+    >
+      {{ t('dashboard.roleSwitch.provider') }}
     </button>
   </div>
 </template>

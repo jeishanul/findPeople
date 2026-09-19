@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import type { Conversation } from '#shared/types/dashboard'
 import type { ProviderProfile, ServiceCategory } from '#shared/types/marketplace'
 
 const { t } = useI18n()
 const route = useRoute()
+const localePath = useLocalePath()
 const authModal = useAuthModal()
+const session = useSession()
 
 const { data: provider, error } = await useApi<ProviderProfile>(`/providers/${route.params.id}`)
 
@@ -12,8 +15,40 @@ if (error.value || !provider.value) {
 }
 
 const { data: categories } = await useApi<ServiceCategory[]>('/categories')
+const { data: conversations } = useApi<Conversation[]>('/dashboard/conversations', {
+  key: 'dashboard-conversations',
+  lazy: true,
+  default: () => [],
+})
+const { ensureConversationForProvider } = useConversations()
+
+function handleRequestQuote() {
+  if (!session.isAuthenticated.value || !provider.value) {
+    authModal.open('login')
+    return
+  }
+  const conversationId = ensureConversationForProvider(
+    provider.value.id,
+    provider.value.name,
+    provider.value.categoryId,
+    conversations.value ?? [],
+  )
+  navigateTo(localePath({ path: '/messages', query: { conversation: conversationId } }))
+}
 const categoryIcon = computed(() => getCategoryIcon(categories.value ?? [], provider.value!.categoryId))
 const categoryLabel = computed(() => t(`marketplace.categories.${provider.value!.categoryId}.label`))
+
+const locationBreadcrumb = computed(() => {
+  if (!provider.value) return ''
+  return [provider.value.provinceName, provider.value.cityName, provider.value.barangay].join(', ')
+})
+
+const availabilityText = computed(() => {
+  const days = formatAvailabilityDays(provider.value?.availableDays ?? [], day => t(`dashboard.days.${day}`), t('marketplace.providerProfile.everyDay'))
+  return days
+    ? t('marketplace.providerProfile.availabilityFormatted', { days })
+    : t('marketplace.providerProfile.availabilityUnavailable')
+})
 
 const pageTitle = computed(() => t('marketplace.providerProfile.seoTitle', {
   name: provider.value!.name,
@@ -77,7 +112,7 @@ useSchemaOrg([defineWebPage()])
               <UiIcon
                 name="map-pin"
                 :size="13"
-              />{{ t('marketplace.provider.distanceAway', { distance: provider.distanceKm }) }}
+              />{{ locationBreadcrumb }}
             </span>
           </div>
         </div>
@@ -230,20 +265,23 @@ useSchemaOrg([defineWebPage()])
           <div class="rounded-2xl border border-black/10 bg-white/70 p-6 backdrop-blur-xl dark:border-white/10 dark:bg-black/30">
             <div class="flex items-baseline justify-between">
               <p class="font-display text-2xl font-bold">
-                ${{ provider.ratePerHour }}<span class="text-sm font-medium text-black/50 dark:text-white/50">{{ t('marketplace.provider.perHour') }}</span>
+                {{ t('marketplace.provider.estimate', { rate: provider.ratePerHour }) }}
               </p>
               <span class="text-xs text-black/50 dark:text-white/50">
                 {{ t('marketplace.providerProfile.minVisitFee', { fee: provider.minVisitFee }) }}
               </span>
             </div>
             <div class="mt-5 flex flex-col gap-2.5">
-              <UiButton variant="primary">
-                {{ t('marketplace.providerProfile.contactProvider') }}
-              </UiButton>
-              <UiButton variant="ghost">
+              <UiButton
+                variant="primary"
+                @click="handleRequestQuote"
+              >
                 {{ t('marketplace.providerProfile.requestQuote') }}
               </UiButton>
             </div>
+            <p class="mt-2.5 text-xs text-black/50 dark:text-white/50">
+              {{ t('marketplace.providerProfile.priceDisclaimer') }}
+            </p>
             <div class="mt-5 flex flex-col gap-2.5 border-t border-black/10 pt-5 text-sm text-black/60 dark:border-white/10 dark:text-white/60">
               <p class="flex items-center gap-2.5">
                 <UiIcon
@@ -259,7 +297,7 @@ useSchemaOrg([defineWebPage()])
                   :size="16"
                   class="text-brand-700"
                 />
-                {{ t('marketplace.providerProfile.availability') }}
+                {{ availabilityText }}
               </p>
             </div>
           </div>

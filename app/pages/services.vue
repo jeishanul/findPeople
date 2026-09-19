@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ServiceListing } from '#shared/types/dashboard'
+import type { ServiceCategory } from '#shared/types/marketplace'
 
 definePageMeta({
   layout: 'dashboard',
@@ -12,23 +13,29 @@ const { data: services } = await useApi<ServiceListing[]>('/dashboard/services',
   key: 'dashboard-services',
   default: () => [],
 })
+const { data: categories } = await useApi<ServiceCategory[]>('/categories', {
+  key: 'categories',
+  default: () => [],
+})
 
-const overrides = ref<Record<string, ServiceListing['status']>>({})
-
-const listings = computed(() =>
-  (services.value ?? []).map(service => ({
-    ...service,
-    status: overrides.value[service.id] ?? service.status,
-  })),
-)
+// Local copy seeded from the fetch (same pattern as `profile.vue`'s
+// `form`/`syncFormFromProfile`) — there's no save endpoint yet (CLAUDE.md),
+// so edits, new services and status toggles all just mutate this copy.
+const listings = ref<ServiceListing[]>([])
+watch(services, (value) => {
+  if (value) listings.value = [...value]
+}, { immediate: true })
 
 function toggleStatus(id: string) {
-  const current = listings.value.find(service => service.id === id)
-  if (!current) return
-  overrides.value = {
-    ...overrides.value,
-    [id]: current.status === 'active' ? 'paused' : 'active',
-  }
+  const service = listings.value.find(item => item.id === id)
+  if (!service) return
+  service.status = service.status === 'active' ? 'paused' : 'active'
+}
+
+function upsertListing(listing: ServiceListing) {
+  const index = listings.value.findIndex(item => item.id === listing.id)
+  if (index === -1) listings.value = [...listings.value, listing]
+  else listings.value = listings.value.map((item, i) => (i === index ? listing : item))
 }
 
 const activeCount = computed(() => listings.value.filter(service => service.status === 'active').length)
@@ -37,6 +44,33 @@ const averageRating = computed(() => {
   if (listings.value.length === 0) return 0
   return listings.value.reduce((sum, service) => sum + service.rating, 0) / listings.value.length
 })
+
+// --- Add/edit form + preview modals ----------------------------------------
+
+const isFormOpen = ref(false)
+const editingService = ref<ServiceListing | null>(null)
+const isPreviewOpen = ref(false)
+const previewingService = ref<ServiceListing | null>(null)
+
+function openCreateForm() {
+  editingService.value = null
+  isFormOpen.value = true
+}
+
+function openEditForm(service: ServiceListing) {
+  editingService.value = service
+  isFormOpen.value = true
+}
+
+function openPreview(service: ServiceListing) {
+  previewingService.value = service
+  isPreviewOpen.value = true
+}
+
+function handleFormSubmit(listing: ServiceListing) {
+  upsertListing(listing)
+  isFormOpen.value = false
+}
 
 useSeoMeta({
   title: t('dashboard.services.title'),
@@ -54,7 +88,10 @@ useSeoMeta({
           {{ t('dashboard.services.subtitle') }}
         </p>
       </div>
-      <UiButton variant="primary">
+      <UiButton
+        variant="primary"
+        @click="openCreateForm"
+      >
         <UiIcon
           name="plus"
           :size="15"
@@ -83,7 +120,22 @@ useSeoMeta({
         :key="service.id"
         :service="service"
         @toggle-status="toggleStatus"
+        @edit="openEditForm"
+        @preview="openPreview"
       />
     </div>
+
+    <DashboardServiceFormModal
+      :open="isFormOpen"
+      :categories="categories ?? []"
+      :service="editingService"
+      @close="isFormOpen = false"
+      @submit="handleFormSubmit"
+    />
+    <DashboardServicePreviewModal
+      :open="isPreviewOpen"
+      :service="previewingService"
+      @close="isPreviewOpen = false"
+    />
   </div>
 </template>

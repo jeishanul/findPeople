@@ -4,7 +4,6 @@ interface SessionState {
   isAuthenticated: boolean
   name: string
   initials: string
-  activeRole: UserRole
 }
 
 /**
@@ -12,18 +11,23 @@ interface SessionState {
  * `MarketplaceAuthModal` and CLAUDE.md), so "logging in" just marks this
  * demo account authenticated. `useState` keeps it request-isolated under SSR
  * (never a module-level ref — see CLAUDE.md) and is the same pattern
- * `useAuthModal` uses for cross-component state. `activeRole` is the
- * Provider/Consumer switch on the dashboard: it only changes which widgets
- * are emphasized, never which routes are reachable — every account can
- * always browse and purchase services, regardless of the active role.
+ * `useAuthModal` uses for cross-component state.
+ *
+ * `activeRole` (the Provider/Consumer switch on the dashboard) is tracked
+ * separately via `useLocalStorage`, not `useState` — it's a durable UI
+ * preference, not login state, so unlike the rest of this mock session it's
+ * expected to survive a reload. It only changes which widgets/nav items are
+ * emphasized, never which routes are reachable while authenticated. Defaults
+ * to 'consumer' since most people who sign up are consumers, not providers.
  */
 export function useSession() {
   const state = useState<SessionState>('session', () => ({
     isAuthenticated: false,
     name: '',
     initials: '',
-    activeRole: 'provider',
   }))
+
+  const activeRole = useLocalStorage<UserRole>('findpeople-active-role', 'consumer')
 
   function login(name: string) {
     state.value = {
@@ -39,14 +43,14 @@ export function useSession() {
   }
 
   function setActiveRole(role: UserRole) {
-    state.value = { ...state.value, activeRole: role }
+    activeRole.value = role
   }
 
   return {
     isAuthenticated: computed(() => state.value.isAuthenticated),
     name: computed(() => state.value.name),
     initials: computed(() => state.value.initials),
-    activeRole: computed(() => state.value.activeRole),
+    activeRole,
     login,
     logout,
     setActiveRole,

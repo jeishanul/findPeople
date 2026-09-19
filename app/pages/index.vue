@@ -27,12 +27,14 @@ const galleryItemsByTab = computed(() => Object.fromEntries(
   GALLERY_TABS.map((tab, index) => [tab, galleryResponses[index]?.data.value ?? []]),
 ) as Record<GalleryTab, GalleryItem[]>)
 
-function handleHeroSearch({ category, location }: { category: string, location: string }) {
+function handleHeroSearch({ category, province, city, barangay }: { category: string, province: string, city: string, barangay: string }) {
   navigateTo(localePath({
     path: '/browse',
     query: {
-      ...(category ? { category } : {}),
-      ...(location ? { location } : {}),
+      ...(category ? { categories: category } : {}),
+      ...(province ? { province } : {}),
+      ...(city ? { city } : {}),
+      ...(barangay ? { barangay } : {}),
     },
   }))
 }

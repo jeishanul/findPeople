@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { PurchaseRecord } from '#shared/types/dashboard'
+import type { Conversation, PurchaseRecord } from '#shared/types/dashboard'
 
 // Auto-imported as <DashboardPurchasesTable/>. Used both on the dashboard
 // overview (a 3-row preview) and the full my-purchases page.
@@ -12,6 +12,7 @@ const props = withDefaults(
 )
 
 const { t } = useI18n()
+const localePath = useLocalePath()
 
 const rows = computed(() => (props.limit ? props.purchases.slice(0, props.limit) : props.purchases))
 
@@ -23,6 +24,27 @@ const AVATAR_TINTS = [
 
 function avatarClass(index: number) {
   return AVATAR_TINTS[index % AVATAR_TINTS.length]
+}
+
+// "Message" opens (or creates) a thread with this provider (see
+// `useConversations` — this dashboard-side mock data isn't linked by id to
+// the separate marketplace provider dataset, only matched by name). "Book
+// again" searches Browse for the same category — a specific provider-profile
+// deep link isn't reliable here since these two mock datasets don't share ids.
+const { data: conversations } = useApi<Conversation[]>('/dashboard/conversations', {
+  key: 'dashboard-conversations',
+  lazy: true,
+  default: () => [],
+})
+const { ensureConversationForCounterpart } = useConversations()
+
+function messageProvider(purchase: PurchaseRecord) {
+  const conversationId = ensureConversationForCounterpart(purchase.providerName, purchase.categoryId, 'provider', conversations.value ?? [])
+  navigateTo(localePath({ path: '/messages', query: { conversation: conversationId } }))
+}
+
+function bookAgain(purchase: PurchaseRecord) {
+  navigateTo(localePath({ path: '/browse', query: { category: purchase.categoryId } }))
 }
 </script>
 
@@ -39,9 +61,6 @@ function avatarClass(index: number) {
           </th>
           <th class="pb-3 pr-3 font-bold">
             {{ t('dashboard.table.date') }}
-          </th>
-          <th class="pb-3 pr-3 font-bold">
-            {{ t('dashboard.table.amount') }}
           </th>
           <th class="pb-3 pr-3 font-bold">
             {{ t('dashboard.table.status') }}
@@ -74,9 +93,6 @@ function avatarClass(index: number) {
           <td class="py-3.5 pr-3 text-black/60 dark:text-white/60">
             {{ purchase.date }}
           </td>
-          <td class="py-3.5 pr-3 font-semibold">
-            ${{ purchase.amountUsd }}
-          </td>
           <td class="py-3.5 pr-3">
             <DashboardStatusBadge :status="purchase.status" />
           </td>
@@ -85,12 +101,14 @@ function avatarClass(index: number) {
               <UiButton
                 variant="ghost"
                 size="sm"
+                @click="messageProvider(purchase)"
               >
                 {{ t('dashboard.table.message') }}
               </UiButton>
               <UiButton
                 variant="secondary"
                 size="sm"
+                @click="bookAgain(purchase)"
               >
                 {{ t('dashboard.table.bookAgain') }}
               </UiButton>
