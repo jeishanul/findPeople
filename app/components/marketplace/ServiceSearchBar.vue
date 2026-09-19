@@ -52,7 +52,7 @@ function handleSubmit() {
 
 <template>
   <form
-    class="flex items-center gap-1 rounded-full border border-black/10 bg-white/70 shadow-lg shadow-black/5 backdrop-blur-xl dark:border-white/10 dark:bg-black/40"
+    class="relative z-10 flex items-center gap-1 rounded-full border border-black/10 bg-white/70 shadow-lg shadow-black/5 backdrop-blur-xl dark:border-white/10 dark:bg-black/40"
     :class="variant === 'large' ? 'p-2' : 'p-1'"
     @submit.prevent="handleSubmit"
   >

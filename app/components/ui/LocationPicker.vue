@@ -7,6 +7,13 @@
 // (built the same combobox-button pattern as `UiSelectSearch`) rather than
 // three permanently-visible dropdowns, so it drops into the existing search
 // bar/filters layout without changing their shape.
+//
+// The popover is a step wizard, not three stacked selects: only the current
+// step's field is rendered, so the popover stays short instead of growing
+// tall enough to run under whatever section follows it on the page. Picking
+// a value advances to the next step automatically; `Back` returns to an
+// earlier step to change it (without losing it), and `Next` re-advances
+// from there without forcing a re-pick — see `goBack`/`goNext` below.
 interface LocationOption {
   code: string
   name: string
@@ -79,10 +86,80 @@ const summary = computed(() => {
   return parts.length > 0 ? parts.join(', ') : null
 })
 
+const STEP_ORDER = ['province', 'city', 'barangay'] as const
+type Step = (typeof STEP_ORDER)[number]
+
+const currentStep = ref<Step>('province')
+const stepIndex = computed(() => STEP_ORDER.indexOf(currentStep.value))
+
+// Resume at the first not-yet-chosen step (or the last one, once every step
+// has a value) rather than always restarting at Province.
+function furthestAvailableStep(): Step {
+  if (!provinceCode.value) return 'province'
+  if (!cityCode.value) return 'city'
+  return 'barangay'
+}
+
+function openPicker() {
+  currentStep.value = furthestAvailableStep()
+  isOpen.value = true
+}
+
+function togglePicker() {
+  if (isOpen.value) isOpen.value = false
+  else openPicker()
+}
+
+function goBack() {
+  if (currentStep.value === 'barangay') currentStep.value = 'city'
+  else if (currentStep.value === 'city') currentStep.value = 'province'
+}
+
+function goNext() {
+  if (currentStep.value === 'province' && provinceCode.value) currentStep.value = 'city'
+  else if (currentStep.value === 'city' && cityCode.value) currentStep.value = 'barangay'
+}
+
+const canGoNext = computed(() => {
+  if (currentStep.value === 'province') return !!provinceCode.value
+  if (currentStep.value === 'city') return !!cityCode.value
+  return false
+})
+
+// These wrap the raw v-models so picking a *new* value both sets it and
+// auto-advances the wizard — but re-selecting the value already there (e.g.
+// after `goBack`) or clearing it via the select's own "x" doesn't, so the
+// step stays put for the user to actually look at/change it.
+const provinceStepModel = computed<string | null>({
+  get: () => provinceCode.value,
+  set: (value) => {
+    const changed = value !== provinceCode.value
+    provinceCode.value = value
+    if (changed && value) currentStep.value = 'city'
+  },
+})
+const cityStepModel = computed<string | null>({
+  get: () => cityCode.value,
+  set: (value) => {
+    const changed = value !== cityCode.value
+    cityCode.value = value
+    if (changed && value) currentStep.value = 'barangay'
+  },
+})
+const barangayStepModel = computed<string | null>({
+  get: () => barangay.value,
+  set: (value) => {
+    barangay.value = value
+    // Barangay is the last, optional step — picking one completes the flow.
+    if (value) isOpen.value = false
+  },
+})
+
 function clearAll() {
   provinceCode.value = null
   cityCode.value = null
   barangay.value = null
+  currentStep.value = 'province'
 }
 
 onClickOutside(rootRef, () => (isOpen.value = false))
@@ -102,7 +179,7 @@ onClickOutside(rootRef, () => (isOpen.value = false))
         : 'rounded-xl border border-black/10 bg-white px-4 py-3 focus-within:border-brand-500 dark:border-white/10 dark:bg-white/5'"
       aria-haspopup="dialog"
       :aria-expanded="isOpen"
-      @click="isOpen = !isOpen"
+      @click="togglePicker"
     >
       <UiIcon
         name="map-pin"
@@ -123,54 +200,106 @@ onClickOutside(rootRef, () => (isOpen.value = false))
 
     <div
       v-if="isOpen"
-      class="absolute z-20 mt-1.5 w-full rounded-xl border border-black/10 bg-white p-3 shadow-lg dark:border-white/10 dark:bg-black"
+      class="absolute z-30 mt-4.5 w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-black/10 bg-white p-3 shadow-lg dark:border-white/10 dark:bg-black"
     >
-      <div class="flex flex-col gap-3">
-        <div>
-          <label
-            :for="`${id}-province`"
-            class="mb-1.5 block text-xs font-bold"
-          >{{ t('marketplace.search.provinceLabel') }}</label>
-          <UiSelectSearch
-            :id="`${id}-province`"
-            v-model="provinceCode"
-            :options="provinceOptions"
-            :placeholder="t('marketplace.search.provincePlaceholder')"
+      <div class="mb-2.5 flex items-center justify-between gap-2">
+        <button
+          v-if="stepIndex > 0"
+          type="button"
+          class="inline-flex items-center gap-0.5 text-xs font-bold text-brand-700 hover:text-brand-800 dark:text-brand-100 dark:hover:text-brand-50"
+          @click="goBack"
+        >
+          <UiIcon
+            name="chevron-left"
+            :size="14"
           />
-        </div>
-        <div>
-          <label
-            :for="`${id}-city`"
-            class="mb-1.5 block text-xs font-bold"
-          >{{ t('marketplace.search.cityLabel') }}</label>
-          <UiSelectSearch
-            :id="`${id}-city`"
-            v-model="cityCode"
-            :options="cityOptions"
-            :disabled="!provinceCode"
-            :placeholder="t('marketplace.search.cityPlaceholder')"
-          />
-        </div>
-        <div>
-          <label
-            :for="`${id}-barangay`"
-            class="mb-1.5 block text-xs font-bold"
-          >{{ t('marketplace.search.barangayLabel') }}</label>
-          <UiSelectSearch
-            :id="`${id}-barangay`"
-            v-model="barangay"
-            :options="barangayOptions"
-            :disabled="!cityCode"
-            :placeholder="t('marketplace.search.barangayPlaceholder')"
-          />
-        </div>
-        <UiButton
+          {{ t('marketplace.search.back') }}
+        </button>
+        <span v-else />
+        <button
           v-if="summary"
-          variant="ghost"
-          size="sm"
+          type="button"
+          class="text-xs font-semibold text-black/50 hover:text-black dark:text-white/50 dark:hover:text-white"
           @click="clearAll"
         >
           {{ t('marketplace.search.clearLocation') }}
+        </button>
+      </div>
+
+      <div
+        class="mb-3 flex gap-1.5"
+        role="presentation"
+      >
+        <span
+          v-for="(step, index) in STEP_ORDER"
+          :key="step"
+          class="h-1 flex-1 rounded-full"
+          :class="index <= stepIndex ? 'bg-brand-600' : 'bg-black/10 dark:bg-white/10'"
+        />
+      </div>
+      <p class="sr-only">
+        {{ t('marketplace.search.stepOf', { current: stepIndex + 1, total: STEP_ORDER.length }) }}
+      </p>
+
+      <div v-if="currentStep === 'province'">
+        <label
+          :for="`${id}-province`"
+          class="mb-1.5 block text-xs font-bold"
+        >{{ t('marketplace.search.provinceLabel') }}</label>
+        <UiSelectSearch
+          :id="`${id}-province`"
+          v-model="provinceStepModel"
+          :options="provinceOptions"
+          :placeholder="t('marketplace.search.provincePlaceholder')"
+        />
+      </div>
+      <div v-else-if="currentStep === 'city'">
+        <label
+          :for="`${id}-city`"
+          class="mb-1.5 block text-xs font-bold"
+        >{{ t('marketplace.search.cityLabel') }}</label>
+        <UiSelectSearch
+          :id="`${id}-city`"
+          v-model="cityStepModel"
+          :options="cityOptions"
+          :placeholder="t('marketplace.search.cityPlaceholder')"
+        />
+      </div>
+      <div v-else>
+        <label
+          :for="`${id}-barangay`"
+          class="mb-1.5 block text-xs font-bold"
+        >{{ t('marketplace.search.barangayLabel') }}</label>
+        <UiSelectSearch
+          :id="`${id}-barangay`"
+          v-model="barangayStepModel"
+          :options="barangayOptions"
+          :placeholder="t('marketplace.search.barangayPlaceholder')"
+        />
+      </div>
+
+      <div
+        v-if="currentStep !== 'barangay' && canGoNext"
+        class="mt-3 flex justify-end"
+      >
+        <UiButton
+          variant="ghost"
+          size="sm"
+          @click="goNext"
+        >
+          {{ t('marketplace.search.next') }}
+        </UiButton>
+      </div>
+      <div
+        v-else-if="currentStep === 'barangay'"
+        class="mt-3 flex justify-end"
+      >
+        <UiButton
+          variant="ghost"
+          size="sm"
+          @click="isOpen = false"
+        >
+          {{ t('marketplace.search.done') }}
         </UiButton>
       </div>
     </div>

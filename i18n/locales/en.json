@@ -141,6 +141,10 @@
       "barangayLabel": "Barangay",
       "barangayPlaceholder": "Select barangay",
       "clearLocation": "Clear location",
+      "back": "Back",
+      "next": "Next",
+      "done": "Done",
+      "stepOf": "Step {current} of {total}",
       "submit": "Search"
     },
     "hero": {
