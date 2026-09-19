@@ -99,7 +99,12 @@ export interface ProviderProfileDetail {
   photoUrl: string | null
   coverPhotoUrl: string | null
   recentWorkPhotoUrls: string[]
-  serviceArea: string
+  /** Province/city are PH location codes (see `server/utils/phLocations.ts`);
+   * barangay is stored by name, matching `UiLocationPicker`'s own model. */
+  provinceCode: string
+  cityCode: string
+  barangay: string
+  address: string
   categoryId: string
   skillIds: string[]
   yearsExperience: number

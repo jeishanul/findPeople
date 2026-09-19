@@ -24,6 +24,15 @@
 // after it the same way the popover's cascading-clear does (picking a new
 // province clears City/Barangay, so Barangay's `v-if` drops it back out of
 // view until a city is picked again).
+//
+// `form` (a profile/settings form, e.g. `pages/profile.vue`) is the third
+// cascade style: every field is always visible AND required, so hiding one
+// would just look broken next to the form's other always-visible required
+// fields. Instead City/Barangay stay in place but `disabled` until their
+// prerequisite is picked — same cascading-clear as the other variants
+// otherwise. It renders as sibling grid cells (no wrapping element) so it
+// drops straight into a caller's own `grid` layout alongside its other
+// fields.
 interface LocationOption {
   code: string
   name: string
@@ -33,7 +42,7 @@ withDefaults(
   defineProps<{
     id?: string
     placeholder?: string
-    variant?: 'default' | 'bare' | 'inline'
+    variant?: 'default' | 'bare' | 'inline' | 'form'
   }>(),
   {
     id: undefined,
@@ -235,6 +244,58 @@ onClickOutside(rootRef, () => (isOpen.value = false))
       {{ t('marketplace.search.clearLocation') }}
     </button>
   </div>
+
+  <template v-else-if="variant === 'form'">
+    <div>
+      <label
+        :for="`${id}-province`"
+        class="mb-1.5 block text-xs font-bold"
+      >{{ t('marketplace.search.provinceLabel') }} <span
+        class="text-red-600 dark:text-red-400"
+        aria-hidden="true"
+      >*</span></label>
+      <UiSelectSearch
+        :id="`${id}-province`"
+        v-model="provinceCode"
+        :options="provinceOptions"
+        :placeholder="t('marketplace.search.provincePlaceholder')"
+      />
+    </div>
+
+    <div>
+      <label
+        :for="`${id}-city`"
+        class="mb-1.5 block text-xs font-bold"
+      >{{ t('marketplace.search.cityLabel') }} <span
+        class="text-red-600 dark:text-red-400"
+        aria-hidden="true"
+      >*</span></label>
+      <UiSelectSearch
+        :id="`${id}-city`"
+        v-model="cityCode"
+        :options="cityOptions"
+        :disabled="!provinceCode"
+        :placeholder="t('marketplace.search.cityPlaceholder')"
+      />
+    </div>
+
+    <div>
+      <label
+        :for="`${id}-barangay`"
+        class="mb-1.5 block text-xs font-bold"
+      >{{ t('marketplace.search.barangayLabel') }} <span
+        class="text-red-600 dark:text-red-400"
+        aria-hidden="true"
+      >*</span></label>
+      <UiSelectSearch
+        :id="`${id}-barangay`"
+        v-model="barangay"
+        :options="barangayOptions"
+        :disabled="!cityCode"
+        :placeholder="t('marketplace.search.barangayPlaceholder')"
+      />
+    </div>
+  </template>
 
   <div
     v-else

@@ -49,7 +49,10 @@ const form = reactive({
   bio: '',
   phone: '',
   email: '',
-  serviceArea: '',
+  provinceCode: null as string | null,
+  cityCode: null as string | null,
+  barangay: null as string | null,
+  address: '',
   categoryId: null as string | null,
   yearsExperience: 0,
   hourlyRateUsd: 0,
@@ -68,7 +71,10 @@ function syncFormFromProfile() {
   form.bio = profile.value.bio
   form.phone = profile.value.phone
   form.email = profile.value.email
-  form.serviceArea = profile.value.serviceArea
+  form.provinceCode = profile.value.provinceCode
+  form.cityCode = profile.value.cityCode
+  form.barangay = profile.value.barangay
+  form.address = profile.value.address
   form.categoryId = profile.value.categoryId
   form.yearsExperience = profile.value.yearsExperience
   form.hourlyRateUsd = profile.value.hourlyRateUsd
@@ -360,15 +366,27 @@ useSeoMeta({
                   @update:model-value="(v) => (form.yearsExperience = Number(v.replace(/\D/g, '')) || 0)"
                 />
               </div>
-              <div class="sm:col-span-2">
+              <UiLocationPicker
+                id="profile-location"
+                v-model:province="form.provinceCode"
+                v-model:city="form.cityCode"
+                v-model:barangay="form.barangay"
+                variant="form"
+              />
+              <div>
                 <label
-                  for="profile-service-area"
+                  for="profile-address"
                   class="mb-2 block text-xs font-bold"
-                >{{ t('dashboard.profile.fields.serviceArea') }}</label>
+                >{{ t('dashboard.profile.fields.address') }} <span
+                  class="text-red-600 dark:text-red-400"
+                  aria-hidden="true"
+                >*</span></label>
                 <UiInput
-                  id="profile-service-area"
-                  v-model="form.serviceArea"
+                  id="profile-address"
+                  v-model="form.address"
                   icon="map-pin"
+                  required
+                  :placeholder="t('dashboard.profile.fields.addressPlaceholder')"
                 />
               </div>
             </div>
