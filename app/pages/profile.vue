@@ -2,9 +2,12 @@
 import type { DashboardSummary, ProviderProfileDetail } from '#shared/types/dashboard'
 import type { ServiceCategory } from '#shared/types/marketplace'
 
+// Reached from Home's quick tiles or the More sheet, never a bottom-nav tab
+// — mobile gets a back button instead of the tab bar (see `UiBackButton`).
 definePageMeta({
   layout: 'dashboard',
   middleware: 'auth',
+  hideBottomNav: true,
 })
 
 const { t, locale } = useI18n()
@@ -180,6 +183,7 @@ useSeoMeta({
 
 <template>
   <div class="flex flex-col gap-6">
+    <UiBackButton fallback="/" />
     <div class="flex flex-wrap items-center justify-between gap-4">
       <div>
         <h1 class="font-display text-2xl font-bold">
@@ -238,7 +242,7 @@ useSeoMeta({
       </div>
 
       <div class="grid grid-cols-1 gap-5 lg:grid-cols-[320px_1fr]">
-        <div class="flex flex-col items-center gap-3.5 rounded-2xl border border-black/10 p-6 text-center dark:border-white/10">
+        <div class="flex flex-col items-center gap-3.5 rounded-2xl border border-black/10 p-5 text-center sm:p-6 dark:border-white/10">
           <img
             v-if="photoUrl"
             :src="photoUrl"
@@ -296,10 +300,10 @@ useSeoMeta({
         </div>
 
         <div class="flex flex-col gap-5">
-          <div class="rounded-2xl border border-black/10 p-6 dark:border-white/10">
-            <h2 class="mb-4 font-display text-[15px] font-bold">
-              {{ t('dashboard.profile.sections.basicInfo') }}
-            </h2>
+          <UiCollapsibleSection
+            :title="t('dashboard.profile.sections.basicInfo')"
+            default-open
+          >
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label
@@ -390,12 +394,9 @@ useSeoMeta({
                 />
               </div>
             </div>
-          </div>
+          </UiCollapsibleSection>
 
-          <div class="rounded-2xl border border-black/10 p-6 dark:border-white/10">
-            <h2 class="mb-4 font-display text-[15px] font-bold">
-              {{ t('dashboard.profile.sections.skills') }}
-            </h2>
+          <UiCollapsibleSection :title="t('dashboard.profile.sections.skills')">
             <div class="mb-3">
               <label
                 for="profile-category"
@@ -448,12 +449,9 @@ useSeoMeta({
                 />{{ t('dashboard.profile.addSkill') }}
               </UiButton>
             </div>
-          </div>
+          </UiCollapsibleSection>
 
-          <div class="rounded-2xl border border-black/10 p-6 dark:border-white/10">
-            <h2 class="mb-4 font-display text-[15px] font-bold">
-              {{ t('dashboard.profile.sections.rateAvailability') }}
-            </h2>
+          <UiCollapsibleSection :title="t('dashboard.profile.sections.rateAvailability')">
             <div class="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div>
                 <label
@@ -511,12 +509,9 @@ useSeoMeta({
             <p class="mt-2.5 text-xs text-black/50 dark:text-white/50">
               {{ t('dashboard.profile.fields.availabilityPreview', { text: availabilityPreview }) }}
             </p>
-          </div>
+          </UiCollapsibleSection>
 
-          <div class="rounded-2xl border border-black/10 p-6 dark:border-white/10">
-            <h2 class="mb-1 font-display text-[15px] font-bold">
-              {{ t('dashboard.profile.sections.recentWork') }}
-            </h2>
+          <UiCollapsibleSection :title="t('dashboard.profile.sections.recentWork')">
             <p class="mb-4 text-xs text-black/50 dark:text-white/50">
               {{ t('dashboard.profile.recentWorkHint') }}
             </p>
@@ -564,7 +559,7 @@ useSeoMeta({
               :aria-label="t('dashboard.profile.addPhoto')"
               @change="onRecentWorkChange"
             >
-          </div>
+          </UiCollapsibleSection>
 
           <div class="flex items-center justify-end gap-2.5">
             <span
