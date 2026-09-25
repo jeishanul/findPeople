@@ -17,16 +17,20 @@ const { data: conversations, refresh } = await useApi<Conversation[]>('/dashboar
 const search = ref('')
 const activeId = ref('')
 
-// Swipe-to-archive on the list (see `UiSwipeAction`) — local-only for now:
-// there's no archive endpoint on the backend yet (see CLAUDE.md/API audit),
-// so archiving just hides the row from `filteredConversations` client-side.
-const archivedIds = ref<string[]>([])
-
-function archiveConversation(id: string) {
-  archivedIds.value = [...archivedIds.value, id]
+// Swipe-to-archive on the list (see `UiSwipeAction`) — archiving is per-side
+// on the backend (see `ConversationController::archive`), so it drops out of
+// `conversations` on the next refresh without any client-side filtering.
+async function archiveConversation(id: string) {
   if (activeId.value === id) {
     activeId.value = ''
     mobileThreadOpen.value = false
+  }
+  try {
+    await useApiFetch(`/api/dashboard/conversations/${id}/archive`, { method: 'PATCH' })
+    await refresh()
+  }
+  catch (error) {
+    console.error('Failed to archive conversation', error)
   }
 }
 
@@ -78,7 +82,6 @@ function selectConversation(id: string) {
 const filteredConversations = computed(() => {
   const query = search.value.trim().toLowerCase()
   return (conversations.value ?? [])
-    .filter(conversation => !archivedIds.value.includes(conversation.id))
     .filter(conversation => !query || conversation.personName.toLowerCase().includes(query))
 })
 
