@@ -1,5 +1,5 @@
 import type { PurchaseRecord } from '#shared/types/dashboard'
 
-export default defineEventHandler((): PurchaseRecord[] => {
-  return getPurchases()
+export default defineEventHandler((event): Promise<PurchaseRecord[]> => {
+  return callApi<PurchaseRecord[]>(event, '/dashboard/purchases')
 })

@@ -19,6 +19,11 @@ const { data: providersPage } = await useApi<PagedResult<ProviderProfile>>('/pro
 const { data: testimonials } = await useApi<Testimonial[]>('/testimonials')
 const { data: faqItems } = await useApi<FaqItem[]>('/faq')
 
+// Loaded once here (a page, safe for top-level await) so every
+// <MarketplaceProviderCard/> in <MarketplaceFeaturedProviders/> below can
+// read `isSaved` synchronously.
+await useSavedProviders().ensureLoaded()
+
 const GALLERY_TABS: GalleryTab[] = ['home', 'recommended', 'trending']
 const galleryResponses = await Promise.all(
   GALLERY_TABS.map(tab => useApi<GalleryItem[]>('/gallery', { query: { tab }, key: `home-gallery-${tab}` })),

@@ -60,6 +60,14 @@ export default defineNuxtConfig({
     storageKey: 'color-mode',
   },
 
+  // Server-only — read exclusively by the Nitro proxy layer in server/api/
+  // (see server/utils/apiProxy.ts). Never under `public`, since the browser
+  // never talks to Laravel directly (Nitro-as-BFF — see CLAUDE.md's Data
+  // fetching / Security sections and the wiring plan).
+  runtimeConfig: {
+    apiBaseUrl: process.env.NUXT_API_BASE_URL || 'http://127.0.0.1:8123',
+  },
+
   // --- Hybrid rendering defaults; extend per-route as pages are added ---
   // `/` and `/providers/**` deliberately stay plain SSR, not `isr`: isr's
   // route-caching layer serves those pages through the same payload-
@@ -184,6 +192,10 @@ export default defineNuxtConfig({
   // data:'` / `'self'`) blocks outright. Extending just those two directives
   // is enough; nothing else about the default policy changes.
   security: {
+    // Real mutating routes and cookie-based auth exist now (see
+    // server/utils/apiProxy.ts) — CLAUDE.md flagged this as the trigger to
+    // flip CSRF on at the same time.
+    csrf: true,
     corsHandler: {
       origin: process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3838',
     },

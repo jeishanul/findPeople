@@ -4,20 +4,20 @@ import type { AttachmentType, Conversation, ConversationMessage, MessageAttachme
 // Auto-imported as <DashboardMessageThread/>. The right-hand panel of the
 // messages page: header (presence), the bubble list (attachments + status
 // ticks + per-message delete), and a WhatsApp-style composer (emoji,
-// attach-menu, auto-growing textarea). There's no send/upload backend yet
-// (see `MarketplaceAuthModal` for the same pattern) — the parent page keeps
-// the actual message list in memory and simulates delivered/seen locally.
+// attach-menu, auto-growing textarea). Sending/deleting/quoting all call the
+// real API now (see `messages.vue`) — this component still only emits, the
+// parent page owns the actual API calls and the message list.
 const props = defineProps<{
   conversation: Conversation
   messages: ConversationMessage[]
 }>()
 
 const emit = defineEmits<{
-  'send': [payload: { text: string, attachment?: MessageAttachment }]
+  'send': [payload: { text: string, file: File | null, attachmentType: AttachmentType | null }]
   'delete': [messageId: string]
   'send-quote': [payload: { basePriceUsd: number, baseHours: number, extraHourlyRateUsd: number, note: string }]
-  'accept-quote': [messageId: string]
-  'decline-quote': [messageId: string]
+  'accept-quote': [quoteId: string]
+  'decline-quote': [quoteId: string]
 }>()
 
 // A quote only makes sense flowing provider -> client (see
@@ -30,6 +30,7 @@ const { t } = useI18n()
 
 const draft = ref('')
 const pendingAttachment = ref<MessageAttachment | null>(null)
+const pendingFile = ref<File | null>(null)
 const showAttachMenu = ref(false)
 const showEmojiPicker = ref(false)
 
@@ -104,6 +105,7 @@ function onMediaChosen(event: Event) {
   if (file) {
     clearPendingAttachment()
     pendingAttachment.value = attachmentFromFile(file, file.type.startsWith('video/') ? 'video' : 'image')
+    pendingFile.value = file
   }
   input.value = ''
 }
@@ -114,6 +116,7 @@ function onDocumentChosen(event: Event) {
   if (file) {
     clearPendingAttachment()
     pendingAttachment.value = attachmentFromFile(file, 'document')
+    pendingFile.value = file
   }
   input.value = ''
 }
@@ -121,6 +124,7 @@ function onDocumentChosen(event: Event) {
 function clearPendingAttachment() {
   if (pendingAttachment.value?.url) URL.revokeObjectURL(pendingAttachment.value.url)
   pendingAttachment.value = null
+  pendingFile.value = null
 }
 
 function autoGrow() {
@@ -143,11 +147,13 @@ function insertEmoji(emoji: string) {
 
 function handleSend() {
   const text = draft.value.trim()
-  const attachment = pendingAttachment.value ?? undefined
-  if (!text && !attachment) return
-  emit('send', { text, attachment })
+  const attachmentType = pendingAttachment.value?.type ?? null
+  const file = pendingFile.value
+  if (!text && !file) return
+  emit('send', { text, file, attachmentType })
   draft.value = ''
   pendingAttachment.value = null
+  pendingFile.value = null
   nextTick(autoGrow)
 }
 
@@ -221,8 +227,9 @@ function handleKeydown(event: KeyboardEvent) {
         <DashboardQuoteCard
           v-if="message.quote"
           :quote="message.quote"
-          @accept="$emit('accept-quote', message.id)"
-          @decline="$emit('decline-quote', message.id)"
+          :can-respond="!message.fromMe"
+          @accept="$emit('accept-quote', message.quote.id)"
+          @decline="$emit('decline-quote', message.quote.id)"
         />
         <div
           v-else

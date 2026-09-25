@@ -10,56 +10,157 @@ const { t } = useI18n()
 const session = useSession()
 const localePath = useLocalePath()
 
-const { data: account } = await useApi<AccountSettings>('/dashboard/account', {
+const { data: account, refresh: refreshAccount } = await useApi<AccountSettings>('/dashboard/account', {
   key: 'dashboard-account',
 })
 
-const twoFa = ref(false)
 const bookingRequests = ref(true)
 const messages = ref(true)
 const marketing = ref(false)
 
 watch(account, (value) => {
   if (!value) return
-  twoFa.value = value.twoFactorEnabled
   bookingRequests.value = value.notificationPreferences.bookingRequests
   messages.value = value.notificationPreferences.messages
   marketing.value = value.notificationPreferences.marketing
 }, { immediate: true })
 
-// --- Change password — mock only, no backend (see CLAUDE.md) --------------
+// --- Two-factor authentication — turning it on opens the QR-code setup flow
+// (<DashboardTwoFactorSetupModal/>); turning it off asks for the current
+// password first, since removing a security control shouldn't be a single
+// accidental click.
+
+const isTwoFactorSetupOpen = ref(false)
+const isTwoFactorDisableOpen = ref(false)
+const disablePassword = ref('')
+const disableError = ref('')
+const disableSubmitting = ref(false)
+
+function onToggleTwoFactor(next: boolean) {
+  if (next) isTwoFactorSetupOpen.value = true
+  else {
+    disablePassword.value = ''
+    disableError.value = ''
+    isTwoFactorDisableOpen.value = true
+  }
+}
+
+async function confirmDisableTwoFactor() {
+  if (!disablePassword.value) return
+  disableSubmitting.value = true
+  disableError.value = ''
+  try {
+    await useApiFetch('/api/dashboard/account/two-factor', {
+      method: 'DELETE',
+      body: { currentPassword: disablePassword.value },
+    })
+    isTwoFactorDisableOpen.value = false
+    await refreshAccount()
+  }
+  catch {
+    disableError.value = t('dashboard.settings.security.currentPasswordError')
+  }
+  finally {
+    disableSubmitting.value = false
+  }
+}
+
+// Notification toggles auto-save on change — there's no separate "save" step
+// in this section's UI, so each flip is its own PUT.
+watch([bookingRequests, messages, marketing], ([bookingRequestsValue, messagesValue, marketingValue]) => {
+  if (!account.value) return
+  useApiFetch('/api/dashboard/account', {
+    method: 'PUT',
+    body: {
+      notificationPreferences: {
+        bookingRequests: bookingRequestsValue,
+        messages: messagesValue,
+        marketing: marketingValue,
+      },
+    },
+  })
+})
 
 const isPasswordModalOpen = ref(false)
+const currentPassword = ref('')
 const newPassword = ref('')
 const confirmPassword = ref('')
 const passwordJustChanged = ref(false)
+const passwordError = ref('')
 
-const canChangePassword = computed(() => newPassword.value.length >= 8 && newPassword.value === confirmPassword.value)
+const canChangePassword = computed(() => currentPassword.value.length > 0 && newPassword.value.length >= 8 && newPassword.value === confirmPassword.value)
 
 function openChangePassword() {
+  currentPassword.value = ''
   newPassword.value = ''
   confirmPassword.value = ''
+  passwordError.value = ''
   isPasswordModalOpen.value = true
 }
 
-function submitChangePassword() {
+async function submitChangePassword() {
   if (!canChangePassword.value) return
-  isPasswordModalOpen.value = false
-  passwordJustChanged.value = true
-  setTimeout(() => (passwordJustChanged.value = false), 2500)
+  passwordError.value = ''
+  try {
+    await useApiFetch('/api/dashboard/account/password', {
+      method: 'PUT',
+      body: { currentPassword: currentPassword.value, password: newPassword.value },
+    })
+    isPasswordModalOpen.value = false
+    passwordJustChanged.value = true
+    setTimeout(() => (passwordJustChanged.value = false), 2500)
+  }
+  catch {
+    passwordError.value = t('dashboard.settings.security.currentPasswordError')
+  }
 }
 
 // --- Deactivate / delete account — destructive, so both are gated behind a
-// confirmation dialog rather than firing on a single click. Neither backend
-// action exists (mock data only), so confirming just logs the mock session
-// out, which is the closest honest equivalent to "this account is gone".
+// confirmation dialog rather than firing on a single click. Deactivate just
+// flips `status` to suspended (an admin can restore it); delete requires the
+// current password and soft-deletes the account (see `AccountController`).
 
 const dangerAction = ref<'deactivate' | 'delete' | null>(null)
+const dangerPassword = ref('')
+const dangerError = ref('')
+const dangerSubmitting = ref(false)
 
-function confirmDangerAction() {
-  dangerAction.value = null
-  session.logout()
-  navigateTo(localePath('/'))
+function openDangerAction(action: 'deactivate' | 'delete') {
+  dangerAction.value = action
+  dangerPassword.value = ''
+  dangerError.value = ''
+}
+
+async function confirmDangerAction() {
+  if (dangerAction.value === 'delete' && !dangerPassword.value) return
+
+  dangerSubmitting.value = true
+  dangerError.value = ''
+  try {
+    if (dangerAction.value === 'deactivate') {
+      await useApiFetch('/api/dashboard/account/deactivate', { method: 'POST' })
+    }
+    else {
+      await useApiFetch('/api/dashboard/account', {
+        method: 'DELETE',
+        body: { currentPassword: dangerPassword.value },
+      })
+    }
+    dangerAction.value = null
+    // The token was already revoked server-side by deactivate/delete — this
+    // just clears the now-stale httpOnly cookie (see `server/api/auth/logout.post.ts`,
+    // which clears it even if the backend call itself 401s).
+    await session.logout()
+    await navigateTo(localePath('/'))
+  }
+  catch {
+    dangerError.value = dangerAction.value === 'delete'
+      ? t('dashboard.settings.security.currentPasswordError')
+      : t('errors.somethingWrong')
+  }
+  finally {
+    dangerSubmitting.value = false
+  }
 }
 
 useSeoMeta({
@@ -164,8 +265,9 @@ useSeoMeta({
             </div>
           </div>
           <UiToggleSwitch
-            v-model="twoFa"
+            :model-value="account.twoFactorEnabled"
             :label="t('dashboard.settings.security.twoFa')"
+            @update:model-value="onToggleTwoFactor"
           />
         </div>
       </section>
@@ -236,7 +338,7 @@ useSeoMeta({
           <button
             type="button"
             class="rounded-md border border-red-600/40 px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-900/20"
-            @click="dangerAction = 'deactivate'"
+            @click="openDangerAction('deactivate')"
           >
             {{ t('dashboard.settings.danger.deactivate') }}
           </button>
@@ -253,7 +355,7 @@ useSeoMeta({
           <button
             type="button"
             class="rounded-md border border-red-600/40 px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-900/20"
-            @click="dangerAction = 'delete'"
+            @click="openDangerAction('delete')"
           >
             {{ t('dashboard.settings.danger.delete') }}
           </button>
@@ -272,6 +374,23 @@ useSeoMeta({
         class="flex flex-col gap-4"
         @submit.prevent="submitChangePassword"
       >
+        <p
+          v-if="passwordError"
+          class="rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 dark:bg-red-900/20 dark:text-red-300"
+        >
+          {{ passwordError }}
+        </p>
+        <div>
+          <label
+            for="settings-current-password"
+            class="mb-1.5 block text-xs font-bold"
+          >{{ t('dashboard.settings.security.currentPasswordLabel') }}</label>
+          <UiInput
+            id="settings-current-password"
+            v-model="currentPassword"
+            type="password"
+          />
+        </div>
         <div>
           <label
             for="settings-new-password"
@@ -323,6 +442,26 @@ useSeoMeta({
       <p class="mb-5 text-sm text-black/60 dark:text-white/60">
         {{ dangerAction === 'delete' ? t('dashboard.settings.danger.confirmDeleteBody') : t('dashboard.settings.danger.confirmDeactivateBody') }}
       </p>
+      <div
+        v-if="dangerAction === 'delete'"
+        class="mb-4"
+      >
+        <label
+          for="danger-password"
+          class="mb-1.5 block text-xs font-bold"
+        >{{ t('dashboard.settings.security.currentPasswordLabel') }}</label>
+        <UiInput
+          id="danger-password"
+          v-model="dangerPassword"
+          type="password"
+        />
+      </div>
+      <p
+        v-if="dangerError"
+        class="mb-4 rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 dark:bg-red-900/20 dark:text-red-300"
+      >
+        {{ dangerError }}
+      </p>
       <div class="flex justify-end gap-2.5">
         <UiButton
           variant="ghost"
@@ -332,11 +471,68 @@ useSeoMeta({
         </UiButton>
         <UiButton
           class="bg-red-600! hover:bg-red-700!"
+          :disabled="dangerSubmitting || (dangerAction === 'delete' && !dangerPassword)"
           @click="confirmDangerAction"
         >
           {{ dangerAction === 'delete' ? t('dashboard.settings.danger.delete') : t('dashboard.settings.danger.deactivate') }}
         </UiButton>
       </div>
+    </UiModal>
+
+    <DashboardTwoFactorSetupModal
+      :open="isTwoFactorSetupOpen"
+      @close="isTwoFactorSetupOpen = false"
+      @enabled="refreshAccount"
+    />
+
+    <UiModal
+      :open="isTwoFactorDisableOpen"
+      @close="isTwoFactorDisableOpen = false"
+    >
+      <h2 class="mb-2 font-display text-xl font-bold">
+        {{ t('dashboard.settings.security.twoFactorDisable.heading') }}
+      </h2>
+      <p class="mb-5 text-sm text-black/60 dark:text-white/60">
+        {{ t('dashboard.settings.security.twoFactorDisable.body') }}
+      </p>
+      <form
+        class="flex flex-col gap-4"
+        @submit.prevent="confirmDisableTwoFactor"
+      >
+        <div>
+          <label
+            for="disable-two-factor-password"
+            class="mb-1.5 block text-xs font-bold"
+          >{{ t('dashboard.settings.security.currentPasswordLabel') }}</label>
+          <UiInput
+            id="disable-two-factor-password"
+            v-model="disablePassword"
+            type="password"
+          />
+        </div>
+        <p
+          v-if="disableError"
+          class="rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 dark:bg-red-900/20 dark:text-red-300"
+        >
+          {{ disableError }}
+        </p>
+        <div class="flex justify-end gap-2.5">
+          <UiButton
+            type="button"
+            variant="ghost"
+            @click="isTwoFactorDisableOpen = false"
+          >
+            {{ t('dashboard.services.form.cancel') }}
+          </UiButton>
+          <UiButton
+            type="submit"
+            class="bg-red-600! hover:bg-red-700!"
+            :disabled="!disablePassword || disableSubmitting"
+          >
+            {{ t('dashboard.settings.security.twoFactorDisable.confirm') }}
+          </UiButton>
+        </div>
+      </form>
     </UiModal>
   </div>
 </template>

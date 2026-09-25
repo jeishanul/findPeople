@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Conversation, ConversationMessage, MessageAttachment, Quote } from '#shared/types/dashboard'
+import type { AttachmentType, Conversation } from '#shared/types/dashboard'
 
 definePageMeta({
   layout: 'dashboard',
@@ -9,38 +9,19 @@ definePageMeta({
 const { t } = useI18n()
 const route = useRoute()
 
-const { data: fetchedConversations } = await useApi<Conversation[]>('/dashboard/conversations', {
+const { data: conversations, refresh } = await useApi<Conversation[]>('/dashboard/conversations', {
   key: 'dashboard-conversations',
   default: () => [],
 })
 
-const { localConversations } = useConversations()
-const { acceptQuote } = useBookings()
-
-// Fetched seed conversations plus any created client-side this session (e.g.
-// via "Request a quote" on a provider profile, or "Message" from a
-// Purchases/Clients Served row with no seeded thread) — see `useConversations`.
-const conversations = computed(() => [...(fetchedConversations.value ?? []), ...localConversations.value])
-
 const search = ref('')
 const activeId = ref('')
 
-// Local, mutable copy of each thread's messages — there's no send/delete
-// backend yet (see `MarketplaceAuthModal` for the same "UI-only" pattern),
-// so sending/deleting only ever changes this in-memory state, seeded once
-// from the fetched conversations.
-const messagesByConversation = ref<Record<string, ConversationMessage[]>>({})
-
 watch(conversations, (list) => {
-  for (const conversation of list) {
-    if (!messagesByConversation.value[conversation.id]) {
-      messagesByConversation.value[conversation.id] = [...conversation.messages]
-    }
-  }
   if (!activeId.value) {
     const requested = typeof route.query.conversation === 'string' ? route.query.conversation : undefined
-    const match = requested ? list.find(c => c.id === requested) : undefined
-    activeId.value = match?.id ?? list[0]?.id ?? ''
+    const match = requested ? list?.find(c => c.id === requested) : undefined
+    activeId.value = match?.id ?? list?.[0]?.id ?? ''
   }
 }, { immediate: true })
 
@@ -49,84 +30,83 @@ watch(conversations, (list) => {
 // so react to in-place query changes too, not just the initial load.
 watch(() => route.query.conversation, (value) => {
   const requested = typeof value === 'string' ? value : undefined
-  if (requested && conversations.value.some(c => c.id === requested)) {
+  if (requested && conversations.value?.some(c => c.id === requested)) {
     activeId.value = requested
   }
 })
 
 const filteredConversations = computed(() => {
   const query = search.value.trim().toLowerCase()
-  return conversations.value.filter(conversation => !query || conversation.personName.toLowerCase().includes(query))
+  return (conversations.value ?? []).filter(conversation => !query || conversation.personName.toLowerCase().includes(query))
 })
 
 const activeConversation = computed(() =>
-  conversations.value.find(conversation => conversation.id === activeId.value) ?? conversations.value[0],
+  (conversations.value ?? []).find(conversation => conversation.id === activeId.value) ?? conversations.value?.[0],
 )
 
-const activeMessages = computed(() => messagesByConversation.value[activeId.value] ?? [])
+const activeMessages = computed(() => activeConversation.value?.messages ?? [])
 
-function setMessageStatus(conversationId: string, messageId: string, status: ConversationMessage['status']) {
-  const list = messagesByConversation.value[conversationId]
-  if (!list) return
-  messagesByConversation.value = {
-    ...messagesByConversation.value,
-    [conversationId]: list.map(message => (message.id === messageId ? { ...message, status } : message)),
+async function handleSend({ text, file, attachmentType }: { text: string, file: File | null, attachmentType: AttachmentType | null }) {
+  const conversationId = activeId.value
+  if (!conversationId) return
+
+  const body = new FormData()
+  if (text) body.append('text', text)
+  if (file) {
+    body.append('attachment', file)
+    body.append('attachmentType', attachmentType ?? 'document')
+  }
+
+  try {
+    await useApiFetch(`/api/dashboard/conversations/${conversationId}/messages`, { method: 'POST', body })
+    await refresh()
+  }
+  catch (error) {
+    console.error('Failed to send message', error)
   }
 }
 
-function appendMessage(conversationId: string, message: ConversationMessage) {
-  messagesByConversation.value = {
-    ...messagesByConversation.value,
-    [conversationId]: [...(messagesByConversation.value[conversationId] ?? []), message],
+async function handleDelete(messageId: string) {
+  try {
+    await useApiFetch(`/api/dashboard/messages/${messageId}`, { method: 'DELETE' })
+    await refresh()
+  }
+  catch (error) {
+    console.error('Failed to delete message', error)
   }
 }
 
-function handleSend({ text, attachment }: { text: string, attachment?: MessageAttachment }) {
+async function handleSendQuote(payload: { basePriceUsd: number, baseHours: number, extraHourlyRateUsd: number, note: string }) {
   const conversationId = activeId.value
-  const messageId = `local-${Date.now()}`
-  appendMessage(conversationId, { id: messageId, fromMe: true, text, attachment, status: 'sent' })
+  if (!conversationId) return
 
-  // Simulate the delivered → seen lifecycle client-side, the same way the
-  // rest of this app fakes anything that would need a real backend.
-  setTimeout(() => setMessageStatus(conversationId, messageId, 'delivered'), 900)
-  setTimeout(() => setMessageStatus(conversationId, messageId, 'seen'), 2400)
-}
-
-function handleDelete(messageId: string) {
-  const conversationId = activeId.value
-  const list = messagesByConversation.value[conversationId]
-  if (!list) return
-  messagesByConversation.value = {
-    ...messagesByConversation.value,
-    [conversationId]: list.filter(message => message.id !== messageId),
+  try {
+    await useApiFetch(`/api/dashboard/conversations/${conversationId}/quotes`, { method: 'POST', body: payload })
+    await refresh()
+  }
+  catch (error) {
+    console.error('Failed to send quote', error)
   }
 }
 
-function handleSendQuote(payload: { basePriceUsd: number, baseHours: number, extraHourlyRateUsd: number, note: string }) {
-  const conversationId = activeId.value
-  const quote: Quote = { id: `quote-${Date.now()}`, ...payload, status: 'pending' }
-  appendMessage(conversationId, { id: `local-${Date.now()}`, fromMe: true, text: '', status: 'sent', quote })
-}
-
-function setQuoteStatus(messageId: string, status: Quote['status']) {
-  const conversationId = activeId.value
-  const list = messagesByConversation.value[conversationId]
-  const message = list?.find(m => m.id === messageId)
-  if (!message?.quote) return
-  messagesByConversation.value = {
-    ...messagesByConversation.value,
-    [conversationId]: list!.map(m => (m.id === messageId ? { ...m, quote: { ...m.quote!, status } } : m)),
+async function handleAcceptQuote(quoteId: string) {
+  try {
+    await useApiFetch(`/api/dashboard/quotes/${quoteId}/accept`, { method: 'PATCH' })
+    await refresh()
   }
-  return message.quote
+  catch (error) {
+    console.error('Failed to accept quote', error)
+  }
 }
 
-function handleAcceptQuote(messageId: string) {
-  const quote = setQuoteStatus(messageId, 'accepted')
-  if (quote && activeConversation.value) acceptQuote(activeConversation.value, { ...quote, status: 'accepted' })
-}
-
-function handleDeclineQuote(messageId: string) {
-  setQuoteStatus(messageId, 'declined')
+async function handleDeclineQuote(quoteId: string) {
+  try {
+    await useApiFetch(`/api/dashboard/quotes/${quoteId}/decline`, { method: 'PATCH' })
+    await refresh()
+  }
+  catch (error) {
+    console.error('Failed to decline quote', error)
+  }
 }
 
 useSeoMeta({

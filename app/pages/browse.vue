@@ -7,6 +7,10 @@ const localePath = useLocalePath()
 
 const { data: categories } = await useApi<ServiceCategory[]>('/categories')
 
+// Loaded once here (a page, safe for top-level await) so every
+// <MarketplaceProviderCard/> below can read `isSaved` synchronously.
+await useSavedProviders().ensureLoaded()
+
 function parseCategoryIds(value: unknown): string[] {
   return typeof value === 'string' && value ? value.split(',').filter(Boolean) : []
 }

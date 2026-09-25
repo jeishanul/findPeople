@@ -13,10 +13,7 @@ const { data: purchases } = await useApi<PurchaseRecord[]>('/dashboard/purchases
   default: () => [],
 })
 
-// Includes bookings created this session by accepting an in-chat quote —
-// see `useBookings`.
-const { purchasesOverlay } = useBookings()
-const allPurchases = computed(() => [...(purchases.value ?? []), ...purchasesOverlay.value])
+const allPurchases = computed(() => purchases.value ?? [])
 
 const filter = ref<string>('all')
 

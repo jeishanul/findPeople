@@ -24,11 +24,8 @@ const { data: purchases } = await useApi<PurchaseRecord[]>('/dashboard/purchases
   default: () => [],
 })
 
-// Includes bookings created this session by accepting an in-chat quote —
-// see `useBookings`.
-const { purchasesOverlay, clientsServedOverlay } = useBookings()
-const allClients = computed(() => [...(clients.value ?? []), ...clientsServedOverlay.value])
-const allPurchases = computed(() => [...(purchases.value ?? []), ...purchasesOverlay.value])
+const allClients = computed(() => clients.value ?? [])
+const allPurchases = computed(() => purchases.value ?? [])
 
 const isProvider = computed(() => session.activeRole.value === 'provider')
 

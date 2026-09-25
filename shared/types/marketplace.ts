@@ -6,6 +6,9 @@
 
 export interface ServiceCategory {
   id: string
+  /** Admin-editable in the backend CMS — used directly now instead of an
+   * i18n lookup, since admins can add categories with no matching i18n key. */
+  name: string
   icon: string
   providerCount: number
 }
@@ -14,6 +17,7 @@ export interface Review {
   id: string
   reviewerName: string
   rating: number
+  comment: string | null
   postedDaysAgo: number
 }
 
@@ -38,6 +42,7 @@ export interface ProviderSummary {
 }
 
 export interface ProviderProfile extends ProviderSummary {
+  bio: string | null
   yearsExperience: number
   jobsCompleted: number
   repeatClientPercent: number
@@ -52,11 +57,20 @@ export interface ProviderProfile extends ProviderSummary {
 export interface Testimonial {
   id: string
   reviewerName: string
+  /** Optional — e.g. "Homeowner, Makati". Admin-editable, real content. */
+  reviewerRole: string | null
   rating: number
+  /** Admin-editable in the backend CMS — used directly instead of an
+   * i18n lookup, since admins can add testimonials with no matching key. */
+  quoteText: string
 }
 
 export interface FaqItem {
   id: string
+  /** Admin-editable in the backend CMS — used directly instead of an
+   * i18n lookup, since admins can add FAQs with no matching key. */
+  question: string
+  answer: string
 }
 
 export type GalleryTab = 'home' | 'recommended' | 'trending'
@@ -82,6 +96,24 @@ export interface ProviderQuery {
   page?: number
   perPage?: number
 }
+
+/**
+ * A single admin-managed item within a homepage content section (hero
+ * slides, trust stats, how-it-works steps, why-choose-us points, app-download
+ * badges). The section-level heading/eyebrow copy stays in i18n — only the
+ * repeatable items themselves come from the API. See `/api/content/[section]`.
+ */
+export interface ContentItem {
+  title: string | null
+  subtitle: string | null
+  description: string | null
+  icon: string | null
+  value: string | null
+  imageUrl: string | null
+  linkUrl: string | null
+}
+
+export type ContentSectionKey = 'hero_slides' | 'trust_stats' | 'how_it_works' | 'why_choose_us' | 'app_download'
 
 export interface PagedResult<T> {
   items: T[]

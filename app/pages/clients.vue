@@ -13,10 +13,7 @@ const { data: clients } = await useApi<ClientServed[]>('/dashboard/clients', {
   default: () => [],
 })
 
-// Includes clients gained this session by accepting an in-chat quote — see
-// `useBookings`.
-const { clientsServedOverlay } = useBookings()
-const allClients = computed(() => [...(clients.value ?? []), ...clientsServedOverlay.value])
+const allClients = computed(() => clients.value ?? [])
 
 const filter = ref<string>('all')
 const search = ref('')

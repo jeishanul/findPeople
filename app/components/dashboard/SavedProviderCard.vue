@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { Conversation, SavedProvider } from '#shared/types/dashboard'
+import type { SavedProvider } from '#shared/types/dashboard'
 
 // Auto-imported as <DashboardSavedProviderCard/>. One card on the saved
 // providers page, with a working "unsave" (heart) action and a "Message"
-// action that opens/creates a thread with this provider (see `useConversations`).
+// action that opens/creates a real conversation with this provider.
 const props = defineProps<{
   provider: SavedProvider
   tone: 'primary' | 'accent' | 'neutral'
@@ -22,16 +22,12 @@ const TONE_CLASS: Record<'primary' | 'accent' | 'neutral', string> = {
   neutral: 'bg-black/5 text-black/60 dark:bg-white/10 dark:text-white/60',
 }
 
-const { data: conversations } = useApi<Conversation[]>('/dashboard/conversations', {
-  key: 'dashboard-conversations',
-  lazy: true,
-  default: () => [],
-})
-const { ensureConversationForCounterpart } = useConversations()
-
-function messageProvider() {
-  const conversationId = ensureConversationForCounterpart(props.provider.name, props.provider.categoryId, 'provider', conversations.value ?? [])
-  navigateTo(localePath({ path: '/messages', query: { conversation: conversationId } }))
+async function messageProvider() {
+  const conversation = await useApiFetch<{ id: string }>('/api/dashboard/conversations', {
+    method: 'POST',
+    body: { providerId: Number(props.provider.id) },
+  })
+  await navigateTo(localePath({ path: '/messages', query: { conversation: conversation.id } }))
 }
 </script>
 

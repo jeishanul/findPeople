@@ -2,12 +2,21 @@
 import type { NotificationItem } from '#shared/types/dashboard'
 
 // Auto-imported as <DashboardNotificationRow/>. One row in the notifications
-// feed — icon, translated title/body, and an unread highlight.
+// feed — icon, translated title/body, and an unread highlight. Clicking an
+// unread row marks it read (`markRead` on the backend, via the parent page).
 const props = defineProps<{
   item: NotificationItem
 }>()
 
+const emit = defineEmits<{
+  'mark-read': []
+}>()
+
 const { t } = useI18n()
+
+function handleClick() {
+  if (!props.item.read) emit('mark-read')
+}
 
 const ICON_BY_KIND: Record<NotificationItem['kind'], IconName> = {
   new_booking: 'briefcase',
@@ -48,9 +57,11 @@ const timeLabel = computed(() => props.item.timeAgoHours < 24
 </script>
 
 <template>
-  <div
-    class="mb-1.5 flex gap-3.5 rounded-xl px-2 py-3.5 last:mb-0"
+  <button
+    type="button"
+    class="mb-1.5 flex w-full gap-3.5 rounded-xl px-2 py-3.5 text-left last:mb-0"
     :class="!item.read && 'bg-brand-50 dark:bg-brand-700/10'"
+    @click="handleClick"
   >
     <span
       class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
@@ -72,5 +83,5 @@ const timeLabel = computed(() => props.item.timeAgoHours < 24
     <div class="shrink-0 text-xs whitespace-nowrap text-black/40 dark:text-white/40">
       {{ timeLabel }}
     </div>
-  </div>
+  </button>
 </template>

@@ -3,27 +3,25 @@ import type { KycState, KycStepId, KycStepStatus } from '#shared/types/dashboard
 
 // Auto-imported as <DashboardKycStepper/>. The full 3-step identity
 // verification flow on the profile page — mandatory before a provider can
-// accept bookings (see CLAUDE.md brief and `pages/profile.vue`). Submission
-// is client-side/mock only (no real backend — see CLAUDE.md): picking the
-// required files/fields and pressing "Submit for review" marks that step
-// in_review via `useKycSubmissions`, session-only like the rest of this
-// app's mock data.
+// accept bookings (see CLAUDE.md brief and `pages/profile.vue`). Each step
+// uploads to `POST /dashboard/kyc/{step}` (see `KycController`); "identity"
+// additionally sends the NID number and back-of-ID photo, both stored
+// alongside the front photo for the admin reviewer to see.
 const props = defineProps<{
   kyc: KycState
 }>()
 
+const emit = defineEmits<{
+  submitted: []
+}>()
+
 const { t } = useI18n()
-const kycSubmissions = useKycSubmissions()
 
 const STEP_ORDER: KycStepId[] = ['identity', 'selfie', 'address']
 
-// Overlays any steps submitted this session on top of the fetched state —
-// see `useKycSubmissions`.
-const effectiveKyc = computed(() => kycSubmissions.applyOverlay(props.kyc))
-
 const orderedSteps = computed(() =>
   STEP_ORDER
-    .map(id => effectiveKyc.value.steps.find(step => step.id === id))
+    .map(id => props.kyc.steps.find(step => step.id === id))
     .filter(step => step !== undefined),
 )
 
@@ -51,7 +49,8 @@ const STEP_CIRCLE_CLASS: Record<KycStepStatus, string> = {
   not_started: 'bg-black/5 text-black/40 dark:bg-white/10 dark:text-white/40',
 }
 
-// --- Client-side (mock) file picking, one slot per upload -----------------
+// --- File picking, one slot per upload — `previewUrl` is a local blob: URL
+// for display only; `submitStep` below uploads the real `file` on submit. ---
 
 interface PickedFile {
   file: File
@@ -105,8 +104,31 @@ const canSubmitIdentity = computed(() => nidNumber.value.trim().length > 0 && !!
 const canSubmitSelfie = computed(() => !!selfiePhoto.value)
 const canSubmitAddress = computed(() => !!addressDocument.value)
 
-function submitStep(stepId: KycStepId) {
-  kycSubmissions.markSubmitted(stepId)
+const STEP_FILE: Record<KycStepId, () => PickedFile | null> = {
+  identity: () => nidFront.value,
+  selfie: () => selfiePhoto.value,
+  address: () => addressDocument.value,
+}
+
+const isSubmitting = ref(false)
+
+async function submitStep(stepId: KycStepId) {
+  const picked = STEP_FILE[stepId]()
+  if (!picked) return
+  isSubmitting.value = true
+  try {
+    const body = new FormData()
+    body.append('file', picked.file)
+    if (stepId === 'identity') {
+      body.append('nidNumber', nidNumber.value)
+      if (nidBack.value) body.append('back', nidBack.value.file)
+    }
+    await useApiFetch(`/api/dashboard/kyc/${stepId}`, { method: 'POST', body })
+    emit('submitted')
+  }
+  finally {
+    isSubmitting.value = false
+  }
 }
 </script>
 
@@ -235,7 +257,7 @@ function submitStep(stepId: KycStepId) {
             <UiButton
               variant="primary"
               class="self-start"
-              :disabled="!canSubmitIdentity"
+              :disabled="!canSubmitIdentity || isSubmitting"
               @click="submitStep('identity')"
             >
               {{ t('dashboard.profile.kyc.submitStep') }}
@@ -280,7 +302,7 @@ function submitStep(stepId: KycStepId) {
             <UiButton
               variant="primary"
               class="mt-1"
-              :disabled="step.id === 'selfie' ? !canSubmitSelfie : !canSubmitAddress"
+              :disabled="(step.id === 'selfie' ? !canSubmitSelfie : !canSubmitAddress) || isSubmitting"
               @click="submitStep(step.id)"
             >
               {{ t('dashboard.profile.kyc.submitStep') }}

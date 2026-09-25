@@ -4,12 +4,12 @@ import type { Quote } from '#shared/types/dashboard'
 // Auto-imported as <DashboardQuoteCard/>. Renders in place of a plain
 // text/attachment bubble when a message carries a structured `quote` (see
 // `shared/types/dashboard.ts`). Accept/Decline show only while the quote is
-// still pending — this is a single mock account with no real counterparty
-// (see CLAUDE.md), so either side of the conversation can resolve it, the
-// same way the rest of this app's actions are all self-directed demo
-// actions rather than requiring a second real account.
+// pending AND the viewer is the recipient — the backend (`QuoteController`)
+// only lets the conversation's consumer accept/decline, so the provider who
+// sent it never sees the buttons on their own message.
 defineProps<{
   quote: Quote
+  canRespond: boolean
 }>()
 
 defineEmits<{
@@ -49,7 +49,7 @@ const { t } = useI18n()
       </p>
 
       <div
-        v-if="quote.status === 'pending'"
+        v-if="quote.status === 'pending' && canRespond"
         class="mt-1.5 flex gap-2"
       >
         <UiButton
@@ -74,7 +74,9 @@ const { t } = useI18n()
         :variant="quote.status === 'accepted' ? 'primary' : 'neutral'"
         class="mt-1 w-fit"
       >
-        {{ quote.status === 'accepted' ? t('dashboard.messages.quote.accepted') : t('dashboard.messages.quote.declined') }}
+        {{ quote.status === 'pending' ? t('dashboard.messages.quote.pending')
+          : quote.status === 'accepted' ? t('dashboard.messages.quote.accepted')
+            : t('dashboard.messages.quote.declined') }}
       </UiTag>
     </div>
   </div>

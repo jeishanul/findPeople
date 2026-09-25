@@ -7,8 +7,11 @@ export const useApi = createUseFetch({
   baseURL: '/api',
   onResponseError({ response }) {
     if (response.status === 401) {
-      // Add an auth flow (e.g. redirect to a login page) once one exists.
-      console.error('Unauthorized API request')
+      // The Nitro proxy layer (server/utils/apiProxy.ts) already cleared the
+      // stale cookie server-side — mirror that locally so `isAuthenticated`
+      // flips immediately, and prompt the person to log back in.
+      useSession().clearLocal()
+      useAuthModal().open('login')
     }
   },
 })
