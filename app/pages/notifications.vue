@@ -11,13 +11,12 @@ definePageMeta({
 
 const { t } = useI18n()
 
-const { data: notifications } = await useApi<NotificationItem[]>('/dashboard/notifications', {
+const { data: notifications, refresh } = await useApi<NotificationItem[]>('/dashboard/notifications', {
   key: 'dashboard-notifications',
   default: () => [],
 })
 
 const filter = ref<string>('all')
-const localReadIds = ref<string[]>([])
 
 const filterOptions = computed(() => {
   const list = notifications.value ?? []
@@ -34,19 +33,21 @@ const filterOptions = computed(() => {
 
 const visibleItems = computed(() =>
   (notifications.value ?? [])
-    .filter(item => filter.value === 'all' || item.topic === filter.value)
-    .map(item => ({ ...item, read: item.read || localReadIds.value.includes(item.id) })),
+    .filter(item => filter.value === 'all' || item.topic === filter.value),
 )
 
 const todayItems = computed(() => visibleItems.value.filter(item => item.timeAgoHours < 24))
 const earlierItems = computed(() => visibleItems.value.filter(item => item.timeAgoHours >= 24))
 
-function markAllRead() {
-  localReadIds.value = (notifications.value ?? []).map(item => item.id)
+async function markRead(id: string) {
+  await useApiFetch(`/api/dashboard/notifications/${id}/read`, { method: 'PATCH' })
+  await refresh()
 }
 
-function markRead(id: string) {
-  if (!localReadIds.value.includes(id)) localReadIds.value = [...localReadIds.value, id]
+async function markAllRead() {
+  const unread = (notifications.value ?? []).filter(item => !item.read)
+  await Promise.all(unread.map(item => useApiFetch(`/api/dashboard/notifications/${item.id}/read`, { method: 'PATCH' })))
+  await refresh()
 }
 
 useSeoMeta({

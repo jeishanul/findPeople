@@ -1,12 +1,11 @@
 import type { ProviderProfile } from '#shared/types/marketplace'
 
-export default defineEventHandler((event): ProviderProfile => {
+export default defineEventHandler((event): Promise<ProviderProfile> => {
   const id = getRouterParam(event, 'id')
-  const provider = id ? getProviderById(id) : undefined
 
-  if (!provider) {
+  if (!id) {
     throw createError({ statusCode: 404, statusMessage: 'Provider not found' })
   }
 
-  return provider
+  return callApi<ProviderProfile>(event, `/providers/${id}`)
 })

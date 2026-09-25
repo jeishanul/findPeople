@@ -44,13 +44,16 @@ const active = computed<Testimonial | undefined>(() => props.testimonials[carous
           />
         </div>
         <p class="mx-auto max-w-xl text-lg font-medium leading-relaxed">
-          &ldquo;{{ t(`marketplace.testimonials.quotes.${active.id}.quote`) }}&rdquo;
+          &ldquo;{{ active.quoteText }}&rdquo;
         </p>
         <p class="mt-6 font-bold">
           {{ active.reviewerName }}
         </p>
-        <p class="text-sm text-black/50 dark:text-white/50">
-          {{ t(`marketplace.testimonials.quotes.${active.id}.role`) }}
+        <p
+          v-if="active.reviewerRole"
+          class="text-sm text-black/50 dark:text-white/50"
+        >
+          {{ active.reviewerRole }}
         </p>
 
         <div class="mt-7 flex justify-center gap-2">

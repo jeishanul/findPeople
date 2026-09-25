@@ -2,7 +2,8 @@
 import type { NotificationItem } from '#shared/types/dashboard'
 
 // Auto-imported as <DashboardNotificationRow/>. One row in the notifications
-// feed — icon, translated title/body, and an unread highlight.
+// feed — icon, translated title/body, and an unread highlight. Clicking an
+// unread row marks it read (`markRead` on the backend, via the parent page).
 const props = defineProps<{
   item: NotificationItem
 }>()

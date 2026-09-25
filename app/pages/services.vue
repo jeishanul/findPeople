@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { ServiceListing } from '#shared/types/dashboard'
 import type { ServiceCategory } from '#shared/types/marketplace'
+import type { ServiceFormSubmitPayload } from '~/components/dashboard/ServiceFormModal.vue'
 
 // Reached from Home's quick tiles or the More sheet, never a bottom-nav tab
 // — mobile gets a back button instead of the tab bar (see `UiBackButton`).
@@ -12,7 +13,7 @@ definePageMeta({
 
 const { t } = useI18n()
 
-const { data: services } = await useApi<ServiceListing[]>('/dashboard/services', {
+const { data: services, refresh } = await useApi<ServiceListing[]>('/dashboard/services', {
   key: 'dashboard-services',
   default: () => [],
 })
@@ -21,24 +22,33 @@ const { data: categories } = await useApi<ServiceCategory[]>('/categories', {
   default: () => [],
 })
 
-// Local copy seeded from the fetch (same pattern as `profile.vue`'s
-// `form`/`syncFormFromProfile`) — there's no save endpoint yet (CLAUDE.md),
-// so edits, new services and status toggles all just mutate this copy.
-const listings = ref<ServiceListing[]>([])
-watch(services, (value) => {
-  if (value) listings.value = [...value]
-}, { immediate: true })
+const listings = computed(() => services.value ?? [])
 
-function toggleStatus(id: string) {
+async function toggleStatus(id: string) {
   const service = listings.value.find(item => item.id === id)
   if (!service) return
-  service.status = service.status === 'active' ? 'paused' : 'active'
+
+  try {
+    await useApiFetch(`/api/dashboard/services/${id}`, {
+      method: 'PUT',
+      body: { ...toServicePayload(service), status: service.status === 'active' ? 'paused' : 'active' },
+    })
+    await refresh()
+  }
+  catch (error) {
+    console.error('Failed to update service status', error)
+  }
 }
 
-function upsertListing(listing: ServiceListing) {
-  const index = listings.value.findIndex(item => item.id === listing.id)
-  if (index === -1) listings.value = [...listings.value, listing]
-  else listings.value = listings.value.map((item, i) => (i === index ? listing : item))
+function toServicePayload(service: ServiceListing): ServiceFormSubmitPayload {
+  return {
+    title: service.title,
+    categoryId: service.categoryId,
+    description: service.description,
+    durationLabel: service.durationLabel,
+    priceType: service.priceType,
+    priceAmount: service.priceAmount,
+  }
 }
 
 const activeCount = computed(() => listings.value.filter(service => service.status === 'active').length)
@@ -70,9 +80,23 @@ function openPreview(service: ServiceListing) {
   isPreviewOpen.value = true
 }
 
-function handleFormSubmit(listing: ServiceListing) {
-  upsertListing(listing)
-  isFormOpen.value = false
+async function handleFormSubmit(payload: ServiceFormSubmitPayload) {
+  try {
+    if (editingService.value) {
+      await useApiFetch(`/api/dashboard/services/${editingService.value.id}`, {
+        method: 'PUT',
+        body: { ...payload, status: editingService.value.status },
+      })
+    }
+    else {
+      await useApiFetch('/api/dashboard/services', { method: 'POST', body: payload })
+    }
+    await refresh()
+    isFormOpen.value = false
+  }
+  catch (error) {
+    console.error('Failed to save service', error)
+  }
 }
 
 useSeoMeta({

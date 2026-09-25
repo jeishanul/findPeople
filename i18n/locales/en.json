@@ -32,7 +32,8 @@
       "forgotPassword": "Forgot password?",
       "submit": "Log in",
       "switchPrompt": "Don't have an account?",
-      "switchAction": "Sign up"
+      "switchAction": "Sign up",
+      "invalidError": "That email/username or password doesn't look right."
     },
     "register": {
       "heading": "Create your account",
@@ -48,7 +49,8 @@
       "termsPrivacy": "Privacy Policy",
       "submit": "Create account",
       "switchPrompt": "Already have an account?",
-      "switchAction": "Log in"
+      "switchAction": "Log in",
+      "failedError": "We couldn't create your account. That email may already be in use."
     },
     "social": {
       "divider": "or continue with",
@@ -71,7 +73,8 @@
       "submit": "Verify code",
       "resendCountdown": "Resend code in {time}",
       "resend": "Resend code",
-      "changeEmail": "Change email"
+      "changeEmail": "Change email",
+      "invalidError": "That code is invalid or has expired."
     },
     "resetPassword": {
       "heading": "Set a new password",
@@ -86,6 +89,15 @@
       "successHeading": "Password reset!",
       "successBody": "You can now log in with your new password.",
       "continueToLogin": "Continue to log in"
+    },
+    "twoFactor": {
+      "heading": "Two-factor verification",
+      "subheading": "Enter the 6-digit code from your authenticator app.",
+      "codeLabel": "Verification code",
+      "codePlaceholder": "123456",
+      "submit": "Verify",
+      "recoveryHint": "Lost your device? You can enter one of your recovery codes instead.",
+      "invalidError": "That code is incorrect or has expired."
     }
   },
   "nav": {
@@ -229,7 +241,9 @@
       "estimate": "Est. ${rate}/hr",
       "fromEstimate": "Est. from ${rate}/hr",
       "message": "Message",
-      "viewProfile": "View profile"
+      "viewProfile": "View profile",
+      "save": "Save provider",
+      "unsave": "Remove from saved providers"
     },
     "skills": {
       "wiring": "Wiring",
@@ -621,6 +635,7 @@
         "bio": "Bio",
         "phone": "Phone",
         "email": "Email",
+        "emailHelp": "Change your email from Account settings.",
         "address": "Address",
         "addressPlaceholder": "House/unit no., street name",
         "primaryCategory": "Primary category",
@@ -732,6 +747,7 @@
         "extraRateNote": "+${rate}/hr for extra work",
         "accept": "Accept",
         "decline": "Decline",
+        "pending": "Awaiting response",
         "accepted": "Accepted",
         "declined": "Declined",
         "acceptedBooked": "Booked — see it in your bookings."
@@ -789,7 +805,9 @@
         "durationLabel": "Duration",
         "durationPlaceholder": "e.g. 2-3 hours",
         "priceLabel": "Price",
-        "pricePlaceholder": "e.g. $45/hr or $150 flat",
+        "pricePlaceholder": "Amount",
+        "priceTypeHourly": "Per hour",
+        "priceTypeFlat": "Flat rate",
         "cancel": "Cancel",
         "save": "Save changes",
         "create": "Create service",
@@ -824,11 +842,29 @@
         "passwordChanged": "Last changed {time}",
         "passwordUpdated": "Password updated",
         "changePassword": "Change password",
+        "currentPasswordLabel": "Current password",
+        "currentPasswordError": "Your current password is incorrect.",
         "newPasswordLabel": "New password",
         "confirmPasswordLabel": "Confirm new password",
         "updatePassword": "Update password",
         "twoFa": "Two-factor authentication",
-        "twoFaBody": "Add an extra layer of security at login"
+        "twoFaBody": "Add an extra layer of security at login",
+        "twoFactorSetup": {
+          "loading": "Setting up...",
+          "heading": "Set up two-factor authentication",
+          "body": "Scan this QR code with an authenticator app (like Google Authenticator or Authy), then enter the 6-digit code it shows.",
+          "manualEntry": "Or enter this code manually:",
+          "verify": "Verify and enable",
+          "invalidCode": "That code is incorrect.",
+          "recoveryHeading": "Save your recovery codes",
+          "recoveryBody": "Store these somewhere safe — each one can be used once if you lose access to your authenticator app. They won't be shown again.",
+          "done": "Done"
+        },
+        "twoFactorDisable": {
+          "heading": "Turn off two-factor authentication",
+          "body": "Enter your current password to confirm. This removes the extra login step from your account.",
+          "confirm": "Turn off"
+        }
       },
       "notifications": {
         "heading": "Notification preferences",
@@ -846,11 +882,11 @@
         "deactivate": "Deactivate account",
         "deactivateBody": "Hide your profile and pause bookings temporarily",
         "delete": "Delete account",
-        "deleteBody": "Permanently remove your account and all data",
+        "deleteBody": "Deactivate your account for good and remove your access",
         "confirmDeactivateTitle": "Deactivate your account?",
-        "confirmDeactivateBody": "Your profile and listings will be hidden and bookings paused until you log back in. You'll be signed out now.",
+        "confirmDeactivateBody": "Your profile and listings will be hidden and you won't be able to log back in until support reactivates your account. You'll be signed out now.",
         "confirmDeleteTitle": "Delete your account?",
-        "confirmDeleteBody": "This permanently removes your account and all data. This can't be undone. You'll be signed out now."
+        "confirmDeleteBody": "This deactivates your account for good and removes your access — your booking and review history stays intact for the people you've worked with. You'll be signed out now."
       }
     }
   }

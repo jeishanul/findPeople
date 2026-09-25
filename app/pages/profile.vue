@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { DashboardSummary, ProviderProfileDetail } from '#shared/types/dashboard'
+import type { DashboardSummary, ProviderProfileDetail, RecentWorkPhoto } from '#shared/types/dashboard'
 import type { ServiceCategory } from '#shared/types/marketplace'
 
 // Reached from Home's quick tiles or the More sheet, never a bottom-nav tab
@@ -12,10 +12,10 @@ definePageMeta({
 
 const { t, locale } = useI18n()
 
-const { data: profile } = await useApi<ProviderProfileDetail>('/dashboard/profile', {
+const { data: profile, refresh: refreshProfile } = await useApi<ProviderProfileDetail>('/dashboard/profile', {
   key: 'dashboard-profile',
 })
-const { data: summary } = await useApi<DashboardSummary>('/dashboard/summary', {
+const { data: summary, refresh: refreshSummary } = await useApi<DashboardSummary>('/dashboard/summary', {
   key: 'dashboard-summary-provider',
   query: { role: 'provider' },
 })
@@ -39,10 +39,10 @@ function setTab(tab: 'details' | 'kyc') {
   router.replace({ query })
 }
 
-// Editable copy of the fetched profile — there's no save endpoint yet (see
-// CLAUDE.md / MarketplaceAuthModal for the same "UI-only" pattern), so
-// "Save changes" just re-syncs this local copy and "Cancel" discards edits.
-// Every field the public provider page (`providers/[id].vue`) shows is
+// Editable copy of the fetched profile — "Save changes" PUTs this to
+// `/dashboard/profile` and "Cancel" discards edits by re-syncing from the
+// last-fetched `profile`. Every field the public provider page
+// (`providers/[id].vue`) shows is
 // editable here except the ones that are actually system-computed from real
 // activity (rating, review count, jobs/clients served, the reviews
 // themselves) — those stay read-only in the summary card below.
@@ -65,7 +65,7 @@ const form = reactive({
 const photoUrl = ref<string | null>(null)
 const coverPhotoUrl = ref<string | null>(null)
 const skillIds = ref<string[]>([])
-const recentWorkPhotoUrls = ref<string[]>([])
+const recentWorkPhotos = ref<RecentWorkPhoto[]>([])
 
 function syncFormFromProfile() {
   if (!profile.value) return
@@ -85,7 +85,7 @@ function syncFormFromProfile() {
   photoUrl.value = profile.value.photoUrl
   coverPhotoUrl.value = profile.value.coverPhotoUrl
   skillIds.value = [...profile.value.skillIds]
-  recentWorkPhotoUrls.value = [...profile.value.recentWorkPhotoUrls]
+  recentWorkPhotos.value = [...profile.value.recentWorkPhotos]
 }
 
 watch(profile, syncFormFromProfile, { immediate: true })
@@ -135,31 +135,48 @@ const availabilityPreview = computed(() => {
   return days ? t('marketplace.providerProfile.availabilityFormatted', { days }) : t('marketplace.providerProfile.availabilityUnavailable')
 })
 
-// --- Client-side (mock) photo picking — no upload backend yet (CLAUDE.md) --
-
 const avatarInput = useTemplateRef('avatarInput')
 const coverInput = useTemplateRef('coverInput')
 const recentWorkInput = useTemplateRef('recentWorkInput')
 
-function onAvatarChange(event: Event) {
+async function onAvatarChange(event: Event) {
   const file = (event.target as HTMLInputElement).files?.[0]
-  if (file) photoUrl.value = URL.createObjectURL(file)
-}
-
-function onCoverChange(event: Event) {
-  const file = (event.target as HTMLInputElement).files?.[0]
-  if (file) coverPhotoUrl.value = URL.createObjectURL(file)
-}
-
-function onRecentWorkChange(event: Event) {
   const input = event.target as HTMLInputElement
-  const file = input.files?.[0]
-  if (file && recentWorkPhotoUrls.value.length < 6) recentWorkPhotoUrls.value = [...recentWorkPhotoUrls.value, URL.createObjectURL(file)]
+  if (!file) return
+  const body = new FormData()
+  body.append('file', file)
+  const result = await useApiFetch<{ url: string }>('/api/dashboard/profile/avatar', { method: 'POST', body })
+  photoUrl.value = result.url
   input.value = ''
 }
 
-function removeRecentWork(index: number) {
-  recentWorkPhotoUrls.value = recentWorkPhotoUrls.value.filter((_, i) => i !== index)
+async function onCoverChange(event: Event) {
+  const file = (event.target as HTMLInputElement).files?.[0]
+  const input = event.target as HTMLInputElement
+  if (!file) return
+  const body = new FormData()
+  body.append('file', file)
+  const result = await useApiFetch<{ url: string }>('/api/dashboard/profile/cover', { method: 'POST', body })
+  coverPhotoUrl.value = result.url
+  input.value = ''
+}
+
+async function onRecentWorkChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file || recentWorkPhotos.value.length >= 6) return
+  const body = new FormData()
+  body.append('file', file)
+  const result = await useApiFetch<{ id: string, url: string }>('/api/dashboard/profile/work-photos', { method: 'POST', body })
+  recentWorkPhotos.value = [...recentWorkPhotos.value, { id: String(result.id), url: result.url }]
+}
+
+async function removeRecentWork(index: number) {
+  const photo = recentWorkPhotos.value[index]
+  if (!photo) return
+  await useApiFetch(`/api/dashboard/profile/work-photos/${photo.id}`, { method: 'DELETE' })
+  recentWorkPhotos.value = recentWorkPhotos.value.filter((_, i) => i !== index)
 }
 
 const memberSinceLabel = computed(() => {
@@ -167,11 +184,28 @@ const memberSinceLabel = computed(() => {
   return new Intl.DateTimeFormat(locale.value, { month: 'long', year: 'numeric' }).format(new Date(profile.value.memberSince))
 })
 
-// No save endpoint yet — "Save changes" just confirms the (already-live)
-// local edits with a brief inline confirmation instead of silently doing
-// nothing (a real gap this fixes — see the panel-improvements plan).
 const justSaved = ref(false)
-function handleSave() {
+async function handleSave() {
+  await useApiFetch('/api/dashboard/profile', {
+    method: 'PUT',
+    body: {
+      fullName: form.fullName,
+      headline: form.headline,
+      bio: form.bio,
+      phone: form.phone,
+      categoryId: form.categoryId,
+      skillIds: skillIds.value,
+      yearsExperience: form.yearsExperience,
+      hourlyRateUsd: form.hourlyRateUsd,
+      minVisitFeeUsd: form.minVisitFeeUsd,
+      availableDays: availableDays.value,
+      provinceCode: form.provinceCode,
+      cityCode: form.cityCode,
+      barangay: form.barangay,
+      address: form.address,
+    },
+  })
+  await refreshProfile()
   justSaved.value = true
   setTimeout(() => (justSaved.value = false), 2500)
 }
@@ -357,7 +391,12 @@ useSeoMeta({
                   id="profile-email"
                   v-model="form.email"
                   type="email"
+                  disabled
+                  class="opacity-60"
                 />
+                <p class="mt-1.5 text-xs text-black/50 dark:text-white/50">
+                  {{ t('dashboard.profile.fields.emailHelp') }}
+                </p>
               </div>
               <div>
                 <label
@@ -517,12 +556,12 @@ useSeoMeta({
             </p>
             <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
               <div
-                v-for="(url, index) in recentWorkPhotoUrls"
-                :key="url"
+                v-for="(photo, index) in recentWorkPhotos"
+                :key="photo.id"
                 class="group relative aspect-[4/3] overflow-hidden rounded-xl"
               >
                 <img
-                  :src="url"
+                  :src="photo.url"
                   :alt="t('dashboard.profile.sections.recentWork')"
                   class="h-full w-full object-cover"
                 >
@@ -539,7 +578,7 @@ useSeoMeta({
                 </button>
               </div>
               <button
-                v-if="recentWorkPhotoUrls.length < 6"
+                v-if="recentWorkPhotos.length < 6"
                 type="button"
                 class="flex aspect-[4/3] flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-black/20 text-black/40 transition-colors hover:border-brand-500 hover:text-brand-600 dark:border-white/20 dark:text-white/40"
                 @click="recentWorkInput?.click()"
@@ -591,6 +630,7 @@ useSeoMeta({
     <DashboardKycStepper
       v-else-if="activeTab === 'kyc' && summary"
       :kyc="summary.kyc"
+      @submitted="refreshSummary"
     />
   </div>
 </template>

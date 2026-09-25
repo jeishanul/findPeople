@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ClientServed, Conversation } from '#shared/types/dashboard'
+import type { ClientServed } from '#shared/types/dashboard'
 
 // Auto-imported as <DashboardClientsTable/>. Used both on the dashboard
 // overview (a 3-row preview) and the full clients-served page.
@@ -26,17 +26,13 @@ function avatarClass(index: number) {
   return AVATAR_TINTS[index % AVATAR_TINTS.length]
 }
 
-// Opens (or creates) a thread with this client — see `useConversations`.
-const { data: conversations } = useApi<Conversation[]>('/dashboard/conversations', {
-  key: 'dashboard-conversations',
-  lazy: true,
-  default: () => [],
-})
-const { ensureConversationForCounterpart } = useConversations()
-
-function messageClient(client: ClientServed) {
-  const conversationId = ensureConversationForCounterpart(client.clientName, client.categoryId, 'client', conversations.value ?? [])
-  navigateTo(localePath({ path: '/messages', query: { conversation: conversationId } }))
+// Opens (or creates) a real conversation with this client.
+async function messageClient(client: ClientServed) {
+  const conversation = await useApiFetch<{ id: string }>('/api/dashboard/conversations', {
+    method: 'POST',
+    body: { consumerUserId: Number(client.clientUserId) },
+  })
+  await navigateTo(localePath({ path: '/messages', query: { conversation: conversation.id } }))
 }
 </script>
 

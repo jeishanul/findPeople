@@ -24,6 +24,9 @@ export type BookingStatus = 'completed' | 'upcoming' | 'in_progress' | 'cancelle
 
 export interface ClientServed {
   id: string
+  /** The client's real user id — lets "Message" find-or-create a real
+   * conversation instead of guessing by name. */
+  clientUserId: string
   clientName: string
   categoryId: string
   date: string
@@ -35,6 +38,9 @@ export interface ClientServed {
 
 export interface PurchaseRecord {
   id: string
+  /** The provider's real provider-profile id — lets "Message" find-or-create
+   * a real conversation instead of guessing by name. */
+  providerId: string
   providerName: string
   categoryId: string
   date: string
@@ -88,17 +94,22 @@ export interface DashboardSummary {
   kyc: KycState
 }
 
+export interface RecentWorkPhoto {
+  id: string
+  url: string
+}
+
 export interface ProviderProfileDetail {
   fullName: string
   headline: string
   bio: string
   phone: string
   email: string
-  /** Client-side object URLs from a local file pick — see CLAUDE.md (no real
-   * upload backend yet), `null` until the provider picks one. */
+  /** Real, uploaded server-hosted images now — `null` until the provider
+   * picks one. */
   photoUrl: string | null
   coverPhotoUrl: string | null
-  recentWorkPhotoUrls: string[]
+  recentWorkPhotos: RecentWorkPhoto[]
   /** Province/city are PH location codes (see `server/utils/phLocations.ts`);
    * barangay is stored by name, matching `UiLocationPicker`'s own model. */
   provinceCode: string
@@ -206,6 +217,7 @@ export interface NotificationItem {
 }
 
 export type ServiceStatus = 'active' | 'paused'
+export type ServicePriceType = 'flat' | 'hourly'
 
 export interface ServiceListing {
   id: string
@@ -213,7 +225,11 @@ export interface ServiceListing {
   categoryId: string
   description: string
   durationLabel: string
+  /** Display-ready (e.g. "$45/hr" or "$150 flat") — for the raw values an
+   * edit form needs, see `priceType`/`priceAmount`. */
   priceLabel: string
+  priceType: ServicePriceType
+  priceAmount: number
   bookingsCount: number
   rating: number
   status: ServiceStatus

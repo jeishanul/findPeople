@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Conversation, PurchaseRecord } from '#shared/types/dashboard'
+import type { PurchaseRecord } from '#shared/types/dashboard'
 
 // Auto-imported as <DashboardPurchasesTable/>. Used both on the dashboard
 // overview (a 3-row preview) and the full my-purchases page.
@@ -26,21 +26,14 @@ function avatarClass(index: number) {
   return AVATAR_TINTS[index % AVATAR_TINTS.length]
 }
 
-// "Message" opens (or creates) a thread with this provider (see
-// `useConversations` — this dashboard-side mock data isn't linked by id to
-// the separate marketplace provider dataset, only matched by name). "Book
-// again" searches Browse for the same category — a specific provider-profile
-// deep link isn't reliable here since these two mock datasets don't share ids.
-const { data: conversations } = useApi<Conversation[]>('/dashboard/conversations', {
-  key: 'dashboard-conversations',
-  lazy: true,
-  default: () => [],
-})
-const { ensureConversationForCounterpart } = useConversations()
-
-function messageProvider(purchase: PurchaseRecord) {
-  const conversationId = ensureConversationForCounterpart(purchase.providerName, purchase.categoryId, 'provider', conversations.value ?? [])
-  navigateTo(localePath({ path: '/messages', query: { conversation: conversationId } }))
+// "Message" opens (or creates) a real conversation with this provider.
+// "Book again" searches Browse for the same category.
+async function messageProvider(purchase: PurchaseRecord) {
+  const conversation = await useApiFetch<{ id: string }>('/api/dashboard/conversations', {
+    method: 'POST',
+    body: { providerId: Number(purchase.providerId) },
+  })
+  await navigateTo(localePath({ path: '/messages', query: { conversation: conversation.id } }))
 }
 
 function bookAgain(purchase: PurchaseRecord) {

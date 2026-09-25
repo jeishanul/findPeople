@@ -8,22 +8,26 @@ definePageMeta({
 
 const { t } = useI18n()
 
-const { data: providers } = await useApi<SavedProvider[]>('/dashboard/saved-providers', {
+const { data: providers, refresh } = await useApi<SavedProvider[]>('/dashboard/saved-providers', {
   key: 'dashboard-saved-providers',
   default: () => [],
 })
 
-const removedIds = ref<string[]>([])
-
-const visibleProviders = computed(() => (providers.value ?? []).filter(provider => !removedIds.value.includes(provider.id)))
+const visibleProviders = computed(() => providers.value ?? [])
 
 const TONES = ['primary', 'accent', 'neutral'] as const
 function toneFor(index: number) {
   return TONES[index % TONES.length] ?? 'primary'
 }
 
-function remove(id: string) {
-  removedIds.value = [...removedIds.value, id]
+async function remove(id: string) {
+  try {
+    await useApiFetch(`/api/dashboard/saved-providers/${id}`, { method: 'DELETE' })
+    await refresh()
+  }
+  catch (error) {
+    console.error('Failed to unsave provider', error)
+  }
 }
 
 useSeoMeta({

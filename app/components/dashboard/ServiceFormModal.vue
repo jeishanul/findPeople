@@ -3,30 +3,43 @@ import type { ServiceCategory } from '#shared/types/marketplace'
 import type { ServiceListing } from '#shared/types/dashboard'
 
 // Auto-imported as <DashboardServiceFormModal/>. Add/edit form for a single
-// service listing — `service: null` means "create new" (services.vue owns
-// the actual list; this only emits the finished listing). No save endpoint
-// yet (see CLAUDE.md — mock data only), so submitting just hands the parent
-// a plain `ServiceListing` object to upsert into its local copy.
+// service listing — `service: null` means "create new". `services.vue` owns
+// the actual API calls (create/update); this only emits the form's values.
 const props = defineProps<{
   open: boolean
   categories: ServiceCategory[]
   service: ServiceListing | null
 }>()
 
+export interface ServiceFormSubmitPayload {
+  title: string
+  categoryId: string
+  description: string
+  durationLabel: string
+  priceType: 'flat' | 'hourly'
+  priceAmount: number
+}
+
 const emit = defineEmits<{
   close: []
-  submit: [ServiceListing]
+  submit: [ServiceFormSubmitPayload]
 }>()
 
 const { t } = useI18n()
 const titleId = useId()
+
+const PRICE_TYPE_OPTIONS = [
+  { value: 'hourly', label: t('dashboard.services.form.priceTypeHourly') },
+  { value: 'flat', label: t('dashboard.services.form.priceTypeFlat') },
+]
 
 const form = reactive({
   title: '',
   categoryId: null as string | null,
   description: '',
   durationLabel: '',
-  priceLabel: '',
+  priceType: 'hourly' as 'flat' | 'hourly',
+  priceAmount: '',
 })
 
 function resetForm() {
@@ -34,7 +47,8 @@ function resetForm() {
   form.categoryId = props.service?.categoryId ?? null
   form.description = props.service?.description ?? ''
   form.durationLabel = props.service?.durationLabel ?? ''
-  form.priceLabel = props.service?.priceLabel ?? ''
+  form.priceType = props.service?.priceType ?? 'hourly'
+  form.priceAmount = props.service ? String(props.service.priceAmount) : ''
 }
 
 watch(() => props.open, (isOpen) => {
@@ -50,21 +64,18 @@ const isValid = computed(() =>
   && form.categoryId
   && form.description.trim().length > 0
   && form.durationLabel.trim().length > 0
-  && form.priceLabel.trim().length > 0,
+  && Number(form.priceAmount) > 0,
 )
 
 function handleSubmit() {
   if (!isValid.value || !form.categoryId) return
   emit('submit', {
-    id: props.service?.id ?? `sv-local-${Date.now()}`,
     title: form.title.trim(),
     categoryId: form.categoryId,
     description: form.description.trim(),
     durationLabel: form.durationLabel.trim(),
-    priceLabel: form.priceLabel.trim(),
-    bookingsCount: props.service?.bookingsCount ?? 0,
-    rating: props.service?.rating ?? 0,
-    status: props.service?.status ?? 'active',
+    priceType: form.priceType,
+    priceAmount: Number(form.priceAmount),
   })
 }
 </script>
@@ -140,11 +151,20 @@ function handleSubmit() {
             for="service-form-price"
             class="mb-1.5 block text-xs font-bold"
           >{{ t('dashboard.services.form.priceLabel') }}</label>
-          <UiInput
-            id="service-form-price"
-            v-model="form.priceLabel"
-            :placeholder="t('dashboard.services.form.pricePlaceholder')"
-          />
+          <div class="flex gap-2">
+            <UiInput
+              id="service-form-price"
+              v-model="form.priceAmount"
+              inputmode="decimal"
+              :placeholder="t('dashboard.services.form.pricePlaceholder')"
+            />
+            <UiSelectSearch
+              class="w-32 shrink-0"
+              :model-value="form.priceType"
+              :options="PRICE_TYPE_OPTIONS"
+              @update:model-value="form.priceType = $event === 'flat' ? 'flat' : 'hourly'"
+            />
+          </div>
         </div>
       </div>
 

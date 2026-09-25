@@ -1,13 +1,17 @@
 /**
- * Guards every logged-in panel page (applied via
- * `definePageMeta({ middleware: 'auth' })` on each one — `/dashboard`,
- * `/profile`, `/messages`, etc.). There's no real auth backend yet (see
- * `useSession`), so this just checks the mock session and, if it's missing,
- * opens the same login modal every other "Log in" control uses before
- * redirecting home.
+ * Guards every logged-in panel page (applied via `definePageMeta({
+ * middleware: 'auth' })` on each one — `/dashboard`, `/profile`, etc.). Real
+ * session now: hydrates once from `/api/auth/me` (via `useSession`) if it
+ * hasn't already this request, then redirects home and opens the login modal
+ * if that comes back unauthenticated.
  */
-export default defineNuxtRouteMiddleware(() => {
+export default defineNuxtRouteMiddleware(async () => {
   const session = useSession()
+
+  if (session.status.value === 'idle') {
+    await session.fetchUser()
+  }
+
   if (session.isAuthenticated.value) return
 
   const authModal = useAuthModal()

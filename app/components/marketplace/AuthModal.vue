@@ -2,14 +2,11 @@
 // Auto-imported as <MarketplaceAuthModal />. Mounted once, site-wide, in
 // `layouts/default.vue` — every "Log in" / "Sign up" / "Message" control
 // anywhere in the app opens this same instance via `useAuthModal()`.
-// UI-only: there's no auth backend yet, so login/register just mark the
-// mock `useSession` authenticated and send the user to the dashboard instead
-// of actually checking anything (see CLAUDE.md — a real submit endpoint
-// needs `security.csrf` turned on at the same time, not bolted on after).
-// The password-reset flow (forgot-password → otp → reset-password) is a
-// client-only simulation for the same reason: the OTP is never checked
-// against anything real, "resend" just restarts the local timer, and
-// "reset" only validates the two password fields against each other.
+// Backed by the real Laravel API now (see `useSession` and
+// `server/api/auth/*`) — login/register/forgot-password/otp/reset-password
+// all call it. The two social buttons stay inert stubs: real OAuth needs
+// external app credentials this project doesn't have, so they're
+// deliberately not wired to anything.
 const { t } = useI18n()
 const authModal = useAuthModal()
 const session = useSession()
@@ -21,6 +18,10 @@ const login = reactive({ identifier: '', password: '' })
 const register = reactive({ fullName: '', email: '', password: '' })
 const showLoginPassword = ref(false)
 const showRegisterPassword = ref(false)
+const loginError = ref('')
+const registerError = ref('')
+const loginLoading = ref(false)
+const registerLoading = ref(false)
 
 const tabButtonClass = (tab: 'login' | 'register') => [
   'rounded-full px-5 py-2.5 text-sm font-bold transition-colors',
@@ -39,6 +40,10 @@ const showResetPassword = ref(false)
 const showResetConfirmPassword = ref(false)
 const resetError = ref('')
 const resetSuccess = ref(false)
+const otpError = ref('')
+const forgotPasswordLoading = ref(false)
+const otpLoading = ref(false)
+const resetPasswordLoading = ref(false)
 
 const RESEND_SECONDS = 45
 const countdown = useCountdown(RESEND_SECONDS)
@@ -57,9 +62,35 @@ const backTarget = computed<BackStep | null>(() => {
     // Going "back" from the success screen would re-open a code that's
     // already served its purpose — only offer it during the input step.
     case 'reset-password': return resetSuccess.value ? null : 'otp'
+    case 'two-factor': return 'login'
     default: return null
   }
 })
+
+// --- 2FA login challenge — the second step when `session.login` reports
+// `twoFactorRequired` instead of returning the user directly. -------------
+
+const twoFactorChallengeToken = ref('')
+const twoFactorCode = ref('')
+const twoFactorError = ref('')
+const twoFactorLoading = ref(false)
+
+async function handleTwoFactorSubmit() {
+  if (twoFactorCode.value.length < 6) return
+  twoFactorLoading.value = true
+  twoFactorError.value = ''
+  try {
+    await session.completeTwoFactorChallenge(twoFactorChallengeToken.value, twoFactorCode.value)
+    authModal.close()
+    await navigateTo(localePath('/dashboard'))
+  }
+  catch {
+    twoFactorError.value = t('auth.twoFactor.invalidError')
+  }
+  finally {
+    twoFactorLoading.value = false
+  }
+}
 
 function goBack() {
   if (backTarget.value) authModal.setView(backTarget.value)
@@ -75,29 +106,58 @@ function goToChangeEmail() {
   authModal.setView('forgot-password')
 }
 
-function handleForgotPasswordSubmit() {
-  authModal.setResetEmail(forgotEmail.value)
-  otpCode.value = ''
-  authModal.setView('otp')
-  countdown.start()
+async function requestOtp() {
+  await useApiFetch('/api/auth/forgot-password', { method: 'POST', body: { email: forgotEmail.value } })
 }
 
-function handleResend() {
+async function handleForgotPasswordSubmit() {
+  forgotPasswordLoading.value = true
+  resetError.value = ''
+  try {
+    await requestOtp()
+    authModal.setResetEmail(forgotEmail.value)
+    otpCode.value = ''
+    authModal.setView('otp')
+    countdown.start()
+  }
+  catch {
+    // The endpoint never reveals whether the email exists — a thrown error
+    // here means the request itself failed, not a wrong/unknown email.
+    resetError.value = t('errors.somethingWrong')
+  }
+  finally {
+    forgotPasswordLoading.value = false
+  }
+}
+
+async function handleResend() {
   if (countdown.isActive.value) return
   otpCode.value = ''
+  await requestOtp()
   countdown.start()
 }
 
-function handleOtpSubmit() {
+async function handleOtpSubmit() {
   if (otpCode.value.length !== 6) return
-  resetError.value = ''
-  resetSuccess.value = false
-  resetPassword.password = ''
-  resetPassword.confirmPassword = ''
-  authModal.setView('reset-password')
+  otpLoading.value = true
+  otpError.value = ''
+  try {
+    await useApiFetch('/api/auth/verify-otp', { method: 'POST', body: { email: authModal.resetEmail.value, code: otpCode.value } })
+    resetError.value = ''
+    resetSuccess.value = false
+    resetPassword.password = ''
+    resetPassword.confirmPassword = ''
+    authModal.setView('reset-password')
+  }
+  catch {
+    otpError.value = t('auth.otp.invalidError')
+  }
+  finally {
+    otpLoading.value = false
+  }
 }
 
-function handleResetPasswordSubmit() {
+async function handleResetPasswordSubmit() {
   if (resetPassword.password.length < 8) {
     resetError.value = t('auth.resetPassword.tooShortError')
     return
@@ -106,8 +166,22 @@ function handleResetPasswordSubmit() {
     resetError.value = t('auth.resetPassword.mismatchError')
     return
   }
-  resetError.value = ''
-  resetSuccess.value = true
+
+  resetPasswordLoading.value = true
+  try {
+    await useApiFetch('/api/auth/reset-password', {
+      method: 'POST',
+      body: { email: authModal.resetEmail.value, code: otpCode.value, password: resetPassword.password },
+    })
+    resetError.value = ''
+    resetSuccess.value = true
+  }
+  catch {
+    resetError.value = t('errors.somethingWrong')
+  }
+  finally {
+    resetPasswordLoading.value = false
+  }
 }
 
 function continueToLogin() {
@@ -115,22 +189,43 @@ function continueToLogin() {
   authModal.setView('login')
 }
 
-// No backend to call yet (see the note above), so both forms "authenticate"
-// into the same seeded demo account the dashboard mock data describes
-// (`server/utils/dashboardData.ts`'s "Amara Chen") rather than whatever was
-// actually typed, and land on the panel that was just designed for it.
-const DEMO_ACCOUNT_NAME = 'Amara Chen'
-
-function handleLoginSubmit() {
-  session.login(DEMO_ACCOUNT_NAME)
-  authModal.close()
-  navigateTo(localePath('/dashboard'))
+async function handleLoginSubmit() {
+  loginLoading.value = true
+  loginError.value = ''
+  try {
+    const result = await session.login(login.identifier, login.password)
+    if ('twoFactorRequired' in result) {
+      twoFactorChallengeToken.value = result.challengeToken
+      twoFactorCode.value = ''
+      twoFactorError.value = ''
+      authModal.setView('two-factor')
+      return
+    }
+    authModal.close()
+    await navigateTo(localePath('/dashboard'))
+  }
+  catch {
+    loginError.value = t('auth.login.invalidError')
+  }
+  finally {
+    loginLoading.value = false
+  }
 }
 
-function handleRegisterSubmit() {
-  session.login(DEMO_ACCOUNT_NAME)
-  authModal.close()
-  navigateTo(localePath('/dashboard'))
+async function handleRegisterSubmit() {
+  registerLoading.value = true
+  registerError.value = ''
+  try {
+    await session.register(register.fullName, register.email, register.password)
+    authModal.close()
+    await navigateTo(localePath('/dashboard'))
+  }
+  catch {
+    registerError.value = t('auth.register.failedError')
+  }
+  finally {
+    registerLoading.value = false
+  }
 }
 </script>
 
@@ -247,6 +342,13 @@ function handleRegisterSubmit() {
           </UiInput>
         </div>
 
+        <p
+          v-if="loginError"
+          class="-mt-1 text-xs font-semibold text-red-600 dark:text-red-400"
+        >
+          {{ loginError }}
+        </p>
+
         <div class="-mt-1 flex items-center justify-between">
           <label
             for="auth-login-remember"
@@ -271,6 +373,7 @@ function handleRegisterSubmit() {
         <UiButton
           type="submit"
           class="mt-1.5 h-[46px] w-full justify-center rounded-xl!"
+          :disabled="loginLoading"
         >
           {{ t('auth.login.submit') }}
         </UiButton>
@@ -388,9 +491,17 @@ function handleRegisterSubmit() {
           </i18n-t>
         </label>
 
+        <p
+          v-if="registerError"
+          class="-mt-1 text-xs font-semibold text-red-600 dark:text-red-400"
+        >
+          {{ registerError }}
+        </p>
+
         <UiButton
           type="submit"
           class="mt-1.5 h-[46px] w-full justify-center rounded-xl!"
+          :disabled="registerLoading"
         >
           {{ t('auth.register.submit') }}
         </UiButton>
@@ -438,9 +549,17 @@ function handleRegisterSubmit() {
           />
         </div>
 
+        <p
+          v-if="resetError"
+          class="-mt-1 text-xs font-semibold text-red-600 dark:text-red-400"
+        >
+          {{ resetError }}
+        </p>
+
         <UiButton
           type="submit"
           class="mt-1.5 h-[46px] w-full justify-center rounded-xl!"
+          :disabled="forgotPasswordLoading"
         >
           {{ t('auth.forgotPassword.submit') }}
         </UiButton>
@@ -485,6 +604,13 @@ function handleRegisterSubmit() {
           class="justify-center"
         />
 
+        <p
+          v-if="otpError"
+          class="-mt-2 text-center text-xs font-semibold text-red-600 dark:text-red-400"
+        >
+          {{ otpError }}
+        </p>
+
         <p class="text-center text-xs text-black/60 dark:text-white/60">
           <span v-if="countdown.isActive.value">{{ t('auth.otp.resendCountdown', { time: countdownLabel }) }}</span>
           <button
@@ -500,7 +626,7 @@ function handleRegisterSubmit() {
         <UiButton
           type="submit"
           class="w-full justify-center"
-          :disabled="otpCode.length !== 6"
+          :disabled="otpCode.length !== 6 || otpLoading"
         >
           {{ t('auth.otp.submit') }}
         </UiButton>
@@ -590,6 +716,7 @@ function handleRegisterSubmit() {
           <UiButton
             type="submit"
             class="mt-1.5 h-[46px] w-full justify-center rounded-xl!"
+            :disabled="resetPasswordLoading"
           >
             {{ t('auth.resetPassword.submit') }}
           </UiButton>
@@ -623,6 +750,56 @@ function handleRegisterSubmit() {
       </template>
     </template>
 
+    <template v-else-if="authModal.view.value === 'two-factor'">
+      <h2
+        :id="titleId"
+        class="text-2xl font-bold"
+      >
+        {{ t('auth.twoFactor.heading') }}
+      </h2>
+      <p class="mt-1.5 text-sm text-black/60 dark:text-white/60">
+        {{ t('auth.twoFactor.subheading') }}
+      </p>
+
+      <form
+        class="mt-6 flex flex-col gap-4"
+        @submit.prevent="handleTwoFactorSubmit"
+      >
+        <div>
+          <label
+            for="auth-two-factor-code"
+            class="mb-2 block text-xs font-bold"
+          >{{ t('auth.twoFactor.codeLabel') }}</label>
+          <UiInput
+            id="auth-two-factor-code"
+            v-model="twoFactorCode"
+            icon="shield-check"
+            autocomplete="one-time-code"
+            :placeholder="t('auth.twoFactor.codePlaceholder')"
+          />
+        </div>
+
+        <p
+          v-if="twoFactorError"
+          class="-mt-1 text-xs font-semibold text-red-600 dark:text-red-400"
+        >
+          {{ twoFactorError }}
+        </p>
+
+        <UiButton
+          type="submit"
+          class="mt-1.5 h-[46px] w-full justify-center rounded-xl!"
+          :disabled="twoFactorCode.length < 6 || twoFactorLoading"
+        >
+          {{ t('auth.twoFactor.submit') }}
+        </UiButton>
+      </form>
+
+      <p class="mt-5 text-center text-xs text-black/50 dark:text-white/50">
+        {{ t('auth.twoFactor.recoveryHint') }}
+      </p>
+    </template>
+
     <template v-if="isAuthTab">
       <div class="my-6 flex items-center gap-3">
         <div class="h-px flex-1 bg-black/10 dark:bg-white/10" />
@@ -631,10 +808,13 @@ function handleRegisterSubmit() {
       </div>
 
       <div class="flex gap-2.5">
+        <!-- Not wired to anything real yet — see the note at the top of this
+             file: real OAuth needs external app credentials this project
+             doesn't have. Disabled rather than silently faking a login. -->
         <button
           type="button"
-          class="flex h-[46px] w-full min-w-0 items-center justify-center gap-2.5 rounded-xl border border-black/10 bg-white text-sm font-semibold whitespace-nowrap text-black transition-colors hover:bg-black/5 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
-          @click="handleLoginSubmit"
+          disabled
+          class="flex h-[46px] w-full min-w-0 cursor-not-allowed items-center justify-center gap-2.5 rounded-xl border border-black/10 bg-white text-sm font-semibold whitespace-nowrap text-black opacity-50 dark:border-white/10 dark:bg-white/5 dark:text-white"
         >
           <UiIcon
             name="google"
@@ -645,8 +825,8 @@ function handleRegisterSubmit() {
         </button>
         <button
           type="button"
-          class="flex h-[46px] w-full min-w-0 items-center justify-center gap-2.5 rounded-xl border border-black/10 bg-white text-sm font-semibold whitespace-nowrap text-black transition-colors hover:bg-black/5 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
-          @click="handleLoginSubmit"
+          disabled
+          class="flex h-[46px] w-full min-w-0 cursor-not-allowed items-center justify-center gap-2.5 rounded-xl border border-black/10 bg-white text-sm font-semibold whitespace-nowrap text-black opacity-50 dark:border-white/10 dark:bg-white/5 dark:text-white"
         >
           <UiIcon
             name="facebook"

@@ -42,7 +42,7 @@ function toggle(id: string) {
           :aria-expanded="openId === item.id"
           @click="toggle(item.id)"
         >
-          <span>{{ t(`marketplace.faq.items.${item.id}.question`) }}</span>
+          <span>{{ item.question }}</span>
           <UiIcon
             name="chevron-down"
             :size="18"
@@ -55,7 +55,7 @@ function toggle(id: string) {
           :class="openId === item.id ? 'mt-3 grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'"
         >
           <p class="min-h-0 leading-relaxed">
-            {{ t(`marketplace.faq.items.${item.id}.answer`) }}
+            {{ item.answer }}
           </p>
         </div>
       </div>

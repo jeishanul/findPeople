@@ -1,11 +1,36 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import type { AuthUser } from '#shared/types/auth'
+import { registerEndpoint } from '@nuxt/test-utils/runtime'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useSession } from './useSession'
+
+const FAKE_USER: AuthUser = {
+  id: '1',
+  name: 'Amara Chen',
+  email: 'amara@example.com',
+  avatarUrl: null,
+  isProvider: false,
+}
+
+// Matches the LocationPicker.test.ts convention: `registerEndpoint` spins up
+// a real mock Nitro handler `$fetch` actually hits, unlike stubbing the
+// global (auto-imports resolve to a fixed binding at transform time, so a
+// global stub never reaches the code under test).
+registerEndpoint('/api/auth/login', () => FAKE_USER)
+registerEndpoint('/api/auth/register', () => FAKE_USER)
+registerEndpoint('/api/auth/logout', () => ({ message: 'Logged out.' }))
+const meMock = vi.fn(() => null as AuthUser | null)
+registerEndpoint('/api/auth/me', () => meMock())
 
 describe('useSession', () => {
   // `activeRole` persists via `useLocalStorage`, not `useState` — reset it
   // between tests so one test's `setActiveRole()` can't leak into the next.
   beforeEach(() => {
     localStorage.clear()
+    meMock.mockReturnValue(null)
+    // `useState('session', ...)` is shared across every `it()` in this file
+    // (same Nuxt app instance) — reset it so one test's login() can't leak
+    // into the next.
+    useSession().clearLocal()
   })
 
   it('starts logged out, on the consumer role, with no name', () => {
@@ -17,43 +42,72 @@ describe('useSession', () => {
     expect(session.activeRole.value).toBe('consumer')
   })
 
-  it('login() authenticates and derives initials from the name', () => {
+  it('login() authenticates with the real endpoint and derives initials from the name', async () => {
     const session = useSession()
 
-    session.login('Amara Chen')
+    await session.login('amara@example.com', 'password123')
 
     expect(session.isAuthenticated.value).toBe(true)
     expect(session.name.value).toBe('Amara Chen')
     expect(session.initials.value).toBe('AC')
   })
 
-  it('derives initials from a single-word name without throwing', () => {
+  it('register() authenticates with the returned user', async () => {
     const session = useSession()
 
-    session.login('Cher')
+    await session.register('Amara Chen', 'amara@example.com', 'password123')
 
-    expect(session.initials.value).toBe('C')
+    expect(session.isAuthenticated.value).toBe(true)
+    expect(session.name.value).toBe('Amara Chen')
   })
 
-  it('setActiveRole() switches roles without logging out', () => {
+  it('fetchUser() hydrates from /api/auth/me, including the logged-out (null) case', async () => {
     const session = useSession()
 
-    session.login('Amara Chen')
+    await session.fetchUser()
+
+    expect(session.isAuthenticated.value).toBe(false)
+    expect(session.status.value).toBe('ready')
+  })
+
+  it('fetchUser() reflects an already-authenticated session', async () => {
+    meMock.mockReturnValue(FAKE_USER)
+    const session = useSession()
+
+    await session.fetchUser()
+
+    expect(session.isAuthenticated.value).toBe(true)
+    expect(session.name.value).toBe('Amara Chen')
+  })
+
+  it('setActiveRole() switches roles without logging out', async () => {
+    const session = useSession()
+
+    await session.login('amara@example.com', 'password123')
     session.setActiveRole('provider')
 
     expect(session.activeRole.value).toBe('provider')
     expect(session.isAuthenticated.value).toBe(true)
   })
 
-  it('logout() de-authenticates without resetting the active role', () => {
+  it('logout() calls the real endpoint and de-authenticates without resetting the active role', async () => {
     const session = useSession()
 
-    session.login('Amara Chen')
+    await session.login('amara@example.com', 'password123')
     session.setActiveRole('provider')
-    session.logout()
+    await session.logout()
 
     expect(session.isAuthenticated.value).toBe(false)
     expect(session.activeRole.value).toBe('provider')
+  })
+
+  it('clearLocal() de-authenticates without calling the network', async () => {
+    const session = useSession()
+    await session.login('amara@example.com', 'password123')
+
+    session.clearLocal()
+
+    expect(session.isAuthenticated.value).toBe(false)
   })
 
   it('persists the active role across separate useSession() calls (survives a reload)', async () => {
@@ -67,11 +121,11 @@ describe('useSession', () => {
     expect(b.activeRole.value).toBe('provider')
   })
 
-  it('shares state across separate calls (single source of truth)', () => {
+  it('shares state across separate calls (single source of truth)', async () => {
     const a = useSession()
     const b = useSession()
 
-    a.login('Amara Chen')
+    await a.login('amara@example.com', 'password123')
     expect(b.isAuthenticated.value).toBe(true)
     expect(b.name.value).toBe('Amara Chen')
   })

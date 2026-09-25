@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { Conversation } from '#shared/types/dashboard'
 import type { ProviderProfile, ServiceCategory } from '#shared/types/marketplace'
 
 // Drill-down/detail screen: mobile gets a floating back button over the
@@ -28,25 +27,35 @@ if (error.value || !provider.value) {
 }
 
 const { data: categories } = await useApi<ServiceCategory[]>('/categories')
-const { data: conversations } = useApi<Conversation[]>('/dashboard/conversations', {
-  key: 'dashboard-conversations',
-  lazy: true,
-  default: () => [],
-})
-const { ensureConversationForProvider } = useConversations()
 
-function handleRequestQuote() {
+const savedProviders = useSavedProviders()
+await savedProviders.ensureLoaded()
+
+async function handleRequestQuote() {
   if (!session.isAuthenticated.value || !provider.value) {
     authModal.open('login')
     return
   }
-  const conversationId = ensureConversationForProvider(
-    provider.value.id,
-    provider.value.name,
-    provider.value.categoryId,
-    conversations.value ?? [],
-  )
-  navigateTo(localePath({ path: '/messages', query: { conversation: conversationId } }))
+  const conversation = await useApiFetch<{ id: string }>('/api/dashboard/conversations', {
+    method: 'POST',
+    body: { providerId: Number(provider.value.id) },
+  })
+  await navigateTo(localePath({ path: '/messages', query: { conversation: conversation.id } }))
+}
+
+const isSaving = ref(false)
+async function handleToggleSave() {
+  if (!session.isAuthenticated.value || !provider.value) {
+    authModal.open('login')
+    return
+  }
+  isSaving.value = true
+  try {
+    await savedProviders.toggle(provider.value.id)
+  }
+  finally {
+    isSaving.value = false
+  }
 }
 const categoryIcon = computed(() => getCategoryIcon(categories.value ?? [], provider.value!.categoryId))
 const categoryLabel = computed(() => t(`marketplace.categories.${provider.value!.categoryId}.label`))
@@ -143,7 +152,7 @@ useSchemaOrg([defineWebPage()])
         <div class="hidden gap-2.5 pb-2 md:flex">
           <UiButton
             variant="ghost"
-            @click="authModal.open('login')"
+            @click="handleRequestQuote"
           >
             <UiIcon
               name="message"
@@ -153,10 +162,24 @@ useSchemaOrg([defineWebPage()])
           </UiButton>
           <UiButton
             variant="primary"
-            @click="authModal.open('login')"
+            @click="handleRequestQuote"
           >
             {{ t('marketplace.providerProfile.contactProvider') }}
           </UiButton>
+          <button
+            type="button"
+            class="flex h-11 w-11 items-center justify-center rounded-full border border-black/10 transition-colors hover:text-red-600 disabled:opacity-50 dark:border-white/10 dark:hover:text-red-400"
+            :class="savedProviders.isSaved(provider.id) ? 'text-red-600 dark:text-red-400' : 'text-black/40 dark:text-white/40'"
+            :aria-label="savedProviders.isSaved(provider.id) ? t('marketplace.provider.unsave') : t('marketplace.provider.save')"
+            :disabled="isSaving"
+            @click="handleToggleSave"
+          >
+            <UiIcon
+              name="heart"
+              :filled="savedProviders.isSaved(provider.id)"
+              :size="18"
+            />
+          </button>
         </div>
       </div>
 
@@ -202,7 +225,7 @@ useSchemaOrg([defineWebPage()])
               {{ t('marketplace.providerProfile.about') }}
             </h2>
             <p class="text-black/60 dark:text-white/60">
-              {{ t(`marketplace.providers.${provider.id}.bio`) }}
+              {{ provider.bio }}
             </p>
           </div>
 
@@ -277,8 +300,11 @@ useSchemaOrg([defineWebPage()])
                     {{ t('marketplace.providerProfile.postedDaysAgo', { days: review.postedDaysAgo }) }}
                   </span>
                 </div>
-                <p class="mt-3 text-sm text-black/60 dark:text-white/60">
-                  {{ t(`marketplace.reviews.${review.id}.comment`) }}
+                <p
+                  v-if="review.comment"
+                  class="mt-3 text-sm text-black/60 dark:text-white/60"
+                >
+                  {{ review.comment }}
                 </p>
               </div>
             </div>

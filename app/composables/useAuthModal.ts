@@ -1,4 +1,4 @@
-export type AuthModalView = 'login' | 'register' | 'forgot-password' | 'otp' | 'reset-password'
+export type AuthModalView = 'login' | 'register' | 'forgot-password' | 'otp' | 'reset-password' | 'two-factor'
 
 interface AuthModalState {
   isOpen: boolean
